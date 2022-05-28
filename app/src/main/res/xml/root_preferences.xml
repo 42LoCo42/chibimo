@@ -3,5 +3,13 @@
 	<Preference
 		app:icon="@drawable/ic_baseline_library_music_24"
 		app:key="musicDirectory"
+		app:persistent="true"
 		app:title="Local music directory" />
+	<EditTextPreference
+		android:icon="@drawable/ic_baseline_api_24"
+		android:key="emoURL"
+		android:selectAllOnFocus="true"
+		android:singleLine="true"
+		android:title="emo URL"
+		app:useSimpleSummaryProvider="true" />
 </PreferenceScreen>
