@@ -10,7 +10,6 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.unnamed.b.atv.model.TreeNode
 import com.unnamed.b.atv.view.AndroidTreeView
@@ -40,10 +39,15 @@ class MainActivity: AppCompatActivity() {
 		)
 
 		class MyHolder(context: Context): TreeNode.BaseNodeViewHolder<TreeNodeValue>(context) {
+			val dp = context.resources.displayMetrics.density.toInt()
+
 			@SuppressLint("SetTextI18n", "InflateParams")
 			override fun createNodeView(node: TreeNode?, value: TreeNodeValue): View =
 				LayoutInflater.from(context).inflate(R.layout.tree_node, null).apply {
-					findViewById<TextView>(R.id.node_title).text = "    ".repeat(value.indent) + value.title
+					findViewById<TextView>(R.id.node_title).apply {
+						text = value.title
+						setPaddingRelative(value.indent * 32 * dp, 8 * dp, 0, 8 * dp)
+					}
 				}
 		}
 
@@ -61,7 +65,14 @@ class MainActivity: AppCompatActivity() {
 		treeView.setDefaultNodeClickListener { node, value ->
 			println(node)
 			println(value)
-			Toast.makeText(this, (value as TreeNodeValue).title, Toast.LENGTH_SHORT).show()
+			node.viewHolder.view.findViewById<TextView>(R.id.node_title)
+				.setCompoundDrawablesRelativeWithIntrinsicBounds(
+					if(node.isExpanded) {
+						R.drawable.ic_baseline_keyboard_arrow_right_24
+					} else {
+						R.drawable.ic_baseline_keyboard_arrow_down_24
+					}, 0, 0, 0
+				)
 		}
 
 		treeBox.addView(treeView.view)
