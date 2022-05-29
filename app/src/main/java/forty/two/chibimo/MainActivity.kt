@@ -129,8 +129,13 @@ class MainActivity: AppCompatActivity() {
 				alertInvalidAddress(getString(R.string.not_set))
 				return@setOnClickListener
 			}
+			val client = EmoConnection(address) {
+				alertInvalidAddress("$address (${it.localizedMessage})")
+			}
+			println(client.getNext())
 
 			alertConnecting()
+			/*
 			thread {
 				TcpClient(address) {
 					runOnUiThread {
@@ -138,8 +143,8 @@ class MainActivity: AppCompatActivity() {
 					}
 				}.start()
 			}
+			*/
 		}
-
 		rebuildTree()
 	}
 
