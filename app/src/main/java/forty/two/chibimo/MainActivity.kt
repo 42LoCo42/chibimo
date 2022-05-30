@@ -42,7 +42,7 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	private fun playSong(song: String) {
-		connectToToPlayer {
+		connectToPlayer {
 			it.play(song)
 			it.progressCallback = { position, duration ->
 				if(!seekBarInUse) {
@@ -179,13 +179,13 @@ class MainActivity: AppCompatActivity() {
 
 			override fun onStopTrackingTouch(p0: SeekBar?) {
 				seekBarInUse = false
-				connectToToPlayer { it.seekTo(seekBar.progress) }
+				connectToPlayer { it.seekTo(seekBar.progress) }
 			}
 
 		})
 
 		findViewById<Button>(R.id.btnPlayPause).setOnClickListener {
-			connectToToPlayer {
+			connectToPlayer {
 				setPlayPauseBtnIcon(it.playPause())
 			}
 		}
@@ -198,7 +198,7 @@ class MainActivity: AppCompatActivity() {
 		}
 
 		findViewById<Button>(R.id.btnRepeat).setOnClickListener {
-			connectToToPlayer {
+			connectToPlayer {
 				lifecycleScope.launch {
 					channel.send(EmoMsg.Repeat(it.currentSong))
 				}
@@ -206,7 +206,7 @@ class MainActivity: AppCompatActivity() {
 		}
 
 		findViewById<Button>(R.id.btnStop).setOnClickListener {
-			connectToToPlayer { it.hardStop() }
+			connectToPlayer { it.hardStop() }
 		}
 
 		rebuildTree()

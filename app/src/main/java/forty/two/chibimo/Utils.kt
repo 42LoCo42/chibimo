@@ -18,7 +18,7 @@ fun DocumentFile.child(path: String): DocumentFile? {
 	return current
 }
 
-fun Context.connectToToPlayer(callback: (PlayerService) -> Unit) {
+fun Context.connectToPlayer(callback: (PlayerService) -> Unit) {
 	val intent = Intent(this, PlayerService::class.java)
 	startForegroundService(intent)
 	bindService(intent, object: ServiceConnection {
