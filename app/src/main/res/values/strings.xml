@@ -18,4 +18,13 @@
 	<string name="next">Next</string>
 	<string name="repeat">Repeat</string>
 	<string name="stop">Stop</string>
+	<string name="play_songs_directly">Play song(s) directly</string>
+	<string name="add_songs_to_queue">Add song(s) to queue</string>
+	<string name="add_songs_random">Add songs in random order</string>
+	<string name="yes">Yes</string>
+	<string name="no">No</string>
+	<string name="local_music_directory">Local music directory</string>
+	<string name="emo_url">emo URL</string>
+	<string name="playing">Playing %s</string>
+	<string name="long_tap_action">Long tap action</string>
 </resources>

@@ -54,11 +54,7 @@ class PlayerService: Service() {
 	override fun onCreate() {
 		manager = getSystemService(NotificationManager::class.java)
 		manager.createNotificationChannel(
-			NotificationChannel(channelID, channelID, NotificationManager.IMPORTANCE_DEFAULT).apply {
-				enableLights(false)
-				enableVibration(false)
-				setSound(null, null)
-			}
+			NotificationChannel(channelID, channelID, NotificationManager.IMPORTANCE_DEFAULT)
 		)
 		super.onCreate()
 	}

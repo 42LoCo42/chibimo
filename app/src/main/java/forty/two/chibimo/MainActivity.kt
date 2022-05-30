@@ -1,6 +1,7 @@
 package forty.two.chibimo
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -27,6 +28,8 @@ class MainActivity: AppCompatActivity() {
 
 	private var seekBarInUse = false
 	private lateinit var seekBar: SeekBar
+	private lateinit var txtPlaying: TextView
+	private lateinit var txtTime: TextView
 
 	override fun onCreateOptionsMenu(menu: Menu?): Boolean {
 		menuInflater.inflate(R.menu.toolbar, menu)
@@ -42,12 +45,15 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	private fun playSong(song: String) {
+		txtPlaying.text = getString(R.string.playing, song)
 		connectToPlayer {
 			it.play(song)
 			it.progressCallback = { position, duration ->
-				if(!seekBarInUse) {
-					seekBar.max = duration
-					seekBar.setProgress(position, true)
+				runOnUiThread {
+					if(!seekBarInUse) {
+						seekBar.max = duration
+						seekBar.setProgress(position, true)
+					}
 				}
 			}
 		}
@@ -81,11 +87,40 @@ class MainActivity: AppCompatActivity() {
 			val tree = TreeNode.root()
 			addFiles(tree, dir, 0)
 
+			fun longTapPlaySongs() =
+				PreferenceManager.getDefaultSharedPreferences(this).getBoolean("longTapPlaysSongs", false)
+
+			fun addSongsRandomized() =
+				PreferenceManager.getDefaultSharedPreferences(this).getBoolean("addSongsRandomized", false)
+
+			fun treeGetFullPath(node: TreeNode): String {
+				// all nodes have the root node as parent, which has no parent
+				// therefore we have to check if our grandparent is null to know
+				// whether we have reached a top-level node
+				return if(node.parent != null && node.parent.parent != null) {
+					treeGetFullPath(node.parent) + "/"
+				} else {
+					""
+				} + (node.value as TreeNodeValue).title
+			}
+
+			fun treePlaySong(node: TreeNode) {
+				playSong(treeGetFullPath(node))
+			}
+
+			fun treeAddDir(node: TreeNode) {
+			}
+
+			fun treeAddSong(node: TreeNode) {
+				lifecycleScope.launch(Dispatchers.IO) {
+					channel.send(EmoMsg.Add(treeGetFullPath(node)))
+				}
+			}
+
 			val treeView = AndroidTreeView(this, tree)
 			treeView.setDefaultViewHolder(MyHolder::class.java)
-			treeView.setDefaultNodeClickListener { node, rawValue ->
-				val value = rawValue as TreeNodeValue
-				if(value.canExpand) {
+			treeView.setDefaultNodeClickListener { node, value ->
+				if((value as TreeNodeValue).canExpand) {
 					node.viewHolder.view.findViewById<TextView>(R.id.node_title)
 						.setCompoundDrawablesRelativeWithIntrinsicBounds(
 							if(node.isExpanded) {
@@ -95,18 +130,24 @@ class MainActivity: AppCompatActivity() {
 							}, 0, 0, 0
 						)
 				} else {
-					fun getFullPath(node: TreeNode): String {
-						// all nodes have the root node as parent, which has no parent
-						// therefore we have to check if our grandparent is null to know
-						// whether we have reached a top-level node
-						return if(node.parent != null && node.parent.parent != null) {
-							getFullPath(node.parent) + "/"
-						} else {
-							""
-						} + (node.value as TreeNodeValue).title
+					if(longTapPlaySongs()) {
+						treeAddSong(node)
+					} else {
+						treePlaySong(node)
 					}
-					playSong(getFullPath(node))
 				}
+			}
+			treeView.setDefaultNodeLongClickListener { node, value ->
+				if((value as TreeNodeValue).canExpand) {
+					treeAddDir(node)
+				} else {
+					if(longTapPlaySongs()) {
+						treePlaySong(node)
+					} else {
+						treeAddSong(node)
+					}
+				}
+				true
 			}
 
 			runOnUiThread {
@@ -171,7 +212,10 @@ class MainActivity: AppCompatActivity() {
 
 		seekBar = findViewById(R.id.seekBar)
 		seekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-			override fun onProgressChanged(p0: SeekBar?, progress: Int, fromUser: Boolean) {}
+			@SuppressLint("SetTextI18n")
+			override fun onProgressChanged(p0: SeekBar?, progress: Int, fromUser: Boolean) {
+				txtTime.text = "${millisToTimeString(progress)} / ${millisToTimeString(seekBar.max)}"
+			}
 
 			override fun onStartTrackingTouch(p0: SeekBar?) {
 				seekBarInUse = true
@@ -183,6 +227,9 @@ class MainActivity: AppCompatActivity() {
 			}
 
 		})
+
+		txtPlaying = findViewById(R.id.txtPlaying)
+		txtTime = findViewById(R.id.txtTime)
 
 		findViewById<Button>(R.id.btnPlayPause).setOnClickListener {
 			connectToPlayer {
@@ -207,6 +254,9 @@ class MainActivity: AppCompatActivity() {
 
 		findViewById<Button>(R.id.btnStop).setOnClickListener {
 			connectToPlayer { it.hardStop() }
+			lifecycleScope.launch(Dispatchers.IO) {
+				channel.send(EmoMsg.Clear)
+			}
 		}
 
 		rebuildTree()

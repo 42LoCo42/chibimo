@@ -1,15 +1,24 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto">
+				  xmlns:app="http://schemas.android.com/apk/res-auto">
 	<Preference
 		app:icon="@drawable/ic_baseline_library_music_24"
 		app:key="musicDirectory"
 		app:persistent="true"
-		app:title="Local music directory" />
+		app:title="@string/local_music_directory"/>
 	<EditTextPreference
 		android:icon="@drawable/ic_baseline_api_24"
 		android:key="emoURL"
 		android:selectAllOnFocus="true"
 		android:singleLine="true"
-		android:title="emo URL"
-		app:useSimpleSummaryProvider="true" />
+		android:title="@string/emo_url"
+		app:useSimpleSummaryProvider="true"/>
+	<SwitchPreference
+		android:defaultValue="false"
+		android:key="longTapPlaysSongs"
+		android:summaryOn="@string/play_songs_directly" android:title="@string/long_tap_action"
+		android:summaryOff="@string/add_songs_to_queue"/>
+	<SwitchPreference
+		android:defaultValue="false"
+		android:title="@string/add_songs_random" android:key="addSongsRandomized"
+		android:summaryOn="@string/yes" android:summaryOff="@string/no"/>
 </PreferenceScreen>

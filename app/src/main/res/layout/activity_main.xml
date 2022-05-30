@@ -31,22 +31,18 @@
 	<SeekBar
 		android:layout_width="0dp"
 		android:layout_height="wrap_content" android:id="@+id/seekBar" app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent" app:layout_constraintBottom_toTopOf="@id/textBox"/>
-	<LinearLayout
-		android:orientation="horizontal"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content" app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		android:id="@+id/textBox" app:layout_constraintBottom_toTopOf="@+id/buttonBox">
-		<TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:id="@+id/txtPlaying" android:layout_weight="1"
-			tools:text="Playing"/>
-		<TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" android:id="@+id/textView2" android:layout_weight="1"
-			tools:text="Time" android:textAlignment="viewEnd"/>
-	</LinearLayout>
+		app:layout_constraintStart_toStartOf="parent" app:layout_constraintBottom_toTopOf="@+id/txtPlaying"/>
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:id="@+id/txtPlaying" android:layout_weight="1"
+		tools:text="Playing" android:textColor="@color/black" android:textSize="16sp"
+		app:layout_constraintStart_toStartOf="parent" app:layout_constraintBottom_toTopOf="@+id/txtTime"/>
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:id="@+id/txtTime" android:layout_weight="1"
+		tools:text="Time" android:textAlignment="viewEnd" android:textSize="16sp" android:textColor="@color/black"
+		app:layout_constraintBottom_toTopOf="@+id/buttonBox"
+		app:layout_constraintStart_toStartOf="parent"/>
 	<LinearLayout
 		android:orientation="horizontal"
 		android:layout_width="match_parent"

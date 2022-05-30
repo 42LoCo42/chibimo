@@ -31,3 +31,15 @@ fun Context.connectToPlayer(callback: (PlayerService) -> Unit) {
 		override fun onServiceDisconnected(p0: ComponentName?) {}
 	}, 0)
 }
+
+fun divMod(num: Int, modulus: Int): Pair<Int, Int> {
+	return (num / modulus) to (num % modulus)
+}
+
+fun millisToTimeString(millis: Int): String {
+	val (hours, r1) = divMod(millis / 1000, 3600)
+	val (minutes, seconds) = divMod(r1, 60)
+	return (if(hours > 0) "$hours h " else "") +
+		(if(minutes > 0) "$minutes min " else "") +
+		"$seconds s"
+}
