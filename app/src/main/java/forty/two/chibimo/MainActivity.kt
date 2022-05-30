@@ -1,30 +1,32 @@
 package forty.two.chibimo
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioAttributes
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
-import android.widget.ScrollView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.unnamed.b.atv.model.TreeNode
 import com.unnamed.b.atv.view.AndroidTreeView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 
 class MainActivity: AppCompatActivity() {
-	val toastController = ToastController(this)
+	private val channel = Channel<EmoMsg>()
+	private val toastController = ToastController(this)
+
+	private var seekBarInUse = false
+	private lateinit var seekBar: SeekBar
 
 	override fun onCreateOptionsMenu(menu: Menu?): Boolean {
 		menuInflater.inflate(R.menu.toolbar, menu)
@@ -39,20 +41,20 @@ class MainActivity: AppCompatActivity() {
 		else -> true
 	}
 
-	private fun getMusicDir() = getMusicDirUri(this)?.let {
-		DocumentFile.fromTreeUri(this, it)
-	}
-
-	private fun DocumentFile.child(path: String): DocumentFile? {
-		var current = this
-		for(component in path.split("/")) {
-			current = current.findFile(component) ?: return null
+	private fun playSong(song: String) {
+		connectToToPlayer {
+			it.play(song)
+			it.progressCallback = { position, duration ->
+				if(!seekBarInUse) {
+					seekBar.max = duration
+					seekBar.setProgress(position, true)
+				}
+			}
 		}
-		return current
 	}
 
 	private fun rebuildTree() {
-		val dir = getMusicDir() ?: return
+		val dir = getMusicDir(this) ?: return
 
 		val treeBox = findViewById<ScrollView>(R.id.treeBox)
 		treeBox.removeAllViews()
@@ -93,7 +95,17 @@ class MainActivity: AppCompatActivity() {
 							}, 0, 0, 0
 						)
 				} else {
-					println(value)
+					fun getFullPath(node: TreeNode): String {
+						// all nodes have the root node as parent, which has no parent
+						// therefore we have to check if our grandparent is null to know
+						// whether we have reached a top-level node
+						return if(node.parent != null && node.parent.parent != null) {
+							getFullPath(node.parent) + "/"
+						} else {
+							""
+						} + (node.value as TreeNodeValue).title
+					}
+					playSong(getFullPath(node))
 				}
 			}
 
@@ -108,8 +120,12 @@ class MainActivity: AppCompatActivity() {
 		toastController.show(R.string.connecting, Toast.LENGTH_LONG)
 	}
 
-	private fun alertInvalidAddress(address: String) {
-		toastController.show(getString(R.string.invalid_address, address), Toast.LENGTH_LONG)
+	private fun alertConnected() {
+		toastController.show(getString(R.string.connected), Toast.LENGTH_LONG)
+	}
+
+	private fun alertConnectionError(error: String) {
+		toastController.show(getString(R.string.connection_error, error), Toast.LENGTH_LONG)
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,50 +138,78 @@ class MainActivity: AppCompatActivity() {
 			requestPermissions(arrayOf(perm), 37812)
 		}
 
-		findViewById<Button>(R.id.btnTest).setOnClickListener {
-			val address = PreferenceManager.getDefaultSharedPreferences(this)
-				.getString("emoURL", "")
-			if(address.isNullOrBlank()) {
-				alertInvalidAddress(getString(R.string.not_set))
-				return@setOnClickListener
-			}
-			val client = EmoConnection(address) {
-				alertInvalidAddress("$address (${it.localizedMessage})")
-			}
-			println(client.getNext())
-
+		val address = PreferenceManager.getDefaultSharedPreferences(this@MainActivity).getString("emoURL", "")
+		if(address.isNullOrBlank()) {
+			alertConnectionError(getString(R.string.not_set))
+		} else {
 			alertConnecting()
-			/*
-			thread {
-				TcpClient(address) {
+			lifecycleScope.launch(Dispatchers.IO) {
+				EmoConnection(channel, address, {
 					runOnUiThread {
-						alertInvalidAddress("$address (${it.localizedMessage})")
+						alertConnected()
+					}
+				}) {
+					runOnUiThread {
+						alertConnectionError("$address (${it.localizedMessage})")
 					}
 				}.start()
 			}
-			*/
 		}
-		rebuildTree()
-	}
 
-	fun play(song: String) {
-		val uri = getMusicDirUri(this)?.let {
-			DocumentFile.fromTreeUri(this, it)?.child(song)?.uri
-		} ?: return
-
-		MediaPlayer().apply {
-			setAudioAttributes(
-				AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-					.setUsage(AudioAttributes.USAGE_MEDIA).build()
-			)
-			setDataSource(this@MainActivity, uri)
-			prepare()
-			start()
-			setOnCompletionListener {
-				Toast.makeText(this@MainActivity, "completed $song", Toast.LENGTH_SHORT).show()
-				release()
+		fun setPlayPauseBtnIcon(playing: Boolean) {
+			with(findViewById<Button>(R.id.btnPlayPause)) {
+				setCompoundDrawablesRelativeWithIntrinsicBounds(
+					if(playing) {
+						R.drawable.ic_baseline_pause_24
+					} else {
+						R.drawable.ic_baseline_play_arrow_24
+					}, 0, 0, 0
+				)
+				gravity
 			}
 		}
+
+		seekBar = findViewById(R.id.seekBar)
+		seekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+			override fun onProgressChanged(p0: SeekBar?, progress: Int, fromUser: Boolean) {}
+
+			override fun onStartTrackingTouch(p0: SeekBar?) {
+				seekBarInUse = true
+			}
+
+			override fun onStopTrackingTouch(p0: SeekBar?) {
+				seekBarInUse = false
+				connectToToPlayer { it.seekTo(seekBar.progress) }
+			}
+
+		})
+
+		findViewById<Button>(R.id.btnPlayPause).setOnClickListener {
+			connectToToPlayer {
+				setPlayPauseBtnIcon(it.playPause())
+			}
+		}
+
+		findViewById<Button>(R.id.btnNext).setOnClickListener {
+			lifecycleScope.launch {
+				channel.send(EmoMsg.GetNext)
+				playSong((channel.receive() as EmoMsg.RespNext).next)
+			}
+		}
+
+		findViewById<Button>(R.id.btnRepeat).setOnClickListener {
+			connectToToPlayer {
+				lifecycleScope.launch {
+					channel.send(EmoMsg.Repeat(it.currentSong))
+				}
+			}
+		}
+
+		findViewById<Button>(R.id.btnStop).setOnClickListener {
+			connectToToPlayer { it.hardStop() }
+		}
+
+		rebuildTree()
 	}
 }
 
@@ -178,7 +222,6 @@ data class TreeNodeValue(
 class MyHolder(context: Context): TreeNode.BaseNodeViewHolder<TreeNodeValue>(context) {
 	private val dp = context.resources.displayMetrics.density.toInt()
 
-	@SuppressLint("SetTextI18n", "InflateParams")
 	override fun createNodeView(node: TreeNode?, value: TreeNodeValue): View =
 		LayoutInflater.from(context).inflate(R.layout.tree_node, null).apply {
 			findViewById<TextView>(R.id.node_title).apply {

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="forty.two.chibimo">
+		  package="forty.two.chibimo">
 
-	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+	<uses-permission android:name="android.permission.INTERNET"/>
 
 	<application
 		android:allowBackup="true"
@@ -14,16 +15,20 @@
 		<activity
 			android:name=".SettingsActivity"
 			android:exported="true"
-			android:label="@string/title_activity_settings" />
+			android:label="@string/title_activity_settings"/>
 		<activity
 			android:name=".MainActivity"
 			android:exported="true">
 			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
+				<action android:name="android.intent.action.MAIN"/>
 
-				<category android:name="android.intent.category.LAUNCHER" />
+				<category android:name="android.intent.category.LAUNCHER"/>
 			</intent-filter>
 		</activity>
+		<service
+			android:name=".PlayerService"
+			android:enabled="true"
+			android:exported="false"/>
 	</application>
 
 </manifest>

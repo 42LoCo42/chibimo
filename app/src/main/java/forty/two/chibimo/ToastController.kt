@@ -7,7 +7,7 @@ import android.widget.Toast
 /**
  * @author Leon Schumacher
  */
-class ToastController(val context: Context) {
+class ToastController(private val context: Context) {
 	private lateinit var lastToast: Toast
 
 	fun show(stringID: Int, duration: Int = Toast.LENGTH_SHORT) {
@@ -21,7 +21,7 @@ class ToastController(val context: Context) {
 		lastToast.show()
 	}
 
-	fun cancel() {
+	private fun cancel() {
 		if(this::lastToast.isInitialized) lastToast.cancel()
 	}
 }

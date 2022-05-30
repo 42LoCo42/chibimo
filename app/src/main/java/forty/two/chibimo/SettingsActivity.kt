@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -16,6 +17,11 @@ fun getMusicDirUri(context: Context): Uri? =
 	PreferenceManager.getDefaultSharedPreferences(context).getString(MUSIC_DIRECTORY, "")?.let {
 		Uri.parse(it)
 	}
+
+fun getMusicDir(context: Context) = getMusicDirUri(context)?.let {
+	if(it.toString().isBlank()) return null
+	DocumentFile.fromTreeUri(context, it)
+}
 
 fun getUriSummary(context: Context): String {
 	val notSet = context.getString(R.string.not_set)

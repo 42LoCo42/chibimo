@@ -12,11 +12,12 @@ import java.net.Socket
  */
 class TcpClient(
 	private val addressAndPort: String,
+	private val onConnected: () -> Unit,
 	private val onError: (Exception) -> Unit,
 ) {
-	lateinit var socket: Socket
-	lateinit var sender: BufferedWriter
-	lateinit var receiver: BufferedReader
+	private lateinit var socket: Socket
+	private lateinit var sender: BufferedWriter
+	private lateinit var receiver: BufferedReader
 
 	fun start() {
 		try {
@@ -24,19 +25,29 @@ class TcpClient(
 			if(parts.size != 2) throw IllegalArgumentException("TcpClient requires address:port")
 			val port = parts[1].toInt()
 
-			val serverAddress = InetAddress.getByName(parts[0]);
+			val serverAddress = InetAddress.getByName(parts[0])
 			socket = Socket(serverAddress, port)
 			sender = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
 			receiver = BufferedReader(InputStreamReader(socket.getInputStream()))
+			onConnected()
 		} catch(e: Exception) {
 			onError(e)
 		}
 	}
 
 	fun sendLine(line: String) {
-		sender.write(line + "\n")
-		sender.flush()
+		try {
+			sender.write(line + "\n")
+			sender.flush()
+		} catch(e: Exception) {
+			onError(e)
+		}
 	}
 
-	fun recvLine(): String = receiver.readLine()
+	fun recvLine(): String = try {
+		receiver.readLine()
+	} catch(e: Exception) {
+		onError(e)
+		""
+	}
 }
