@@ -15,8 +15,8 @@
 	<SwitchPreference
 		android:defaultValue="false"
 		android:key="longTapPlaysSongs"
-		android:summaryOn="@string/play_songs_directly" android:title="@string/long_tap_action"
-		android:summaryOff="@string/add_songs_to_queue"/>
+		android:summaryOn="@string/play_song_directly" android:title="@string/long_tap_action"
+		android:summaryOff="@string/add_song_to_queue"/>
 	<SwitchPreference
 		android:defaultValue="false"
 		android:title="@string/add_songs_random" android:key="addSongsRandomized"

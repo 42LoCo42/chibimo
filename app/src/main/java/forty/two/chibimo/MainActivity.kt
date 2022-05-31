@@ -44,12 +44,11 @@ class MainActivity: AppCompatActivity() {
 		else -> true
 	}
 
-	private fun playSong(song: String) {
-		txtPlaying.text = getString(R.string.playing, song)
+	private fun setPlayerCallbacks() {
 		connectToPlayer {
-			it.play(song)
 			it.progressCallback = { position, duration ->
 				runOnUiThread {
+					txtPlaying.text = getString(R.string.playing, it.currentSong)
 					if(!seekBarInUse) {
 						seekBar.max = duration
 						seekBar.setProgress(position, true)
@@ -57,6 +56,13 @@ class MainActivity: AppCompatActivity() {
 				}
 			}
 		}
+	}
+
+	private fun playSong(song: String) {
+		connectToPlayer {
+			it.play(song)
+		}
+		setPlayerCallbacks()
 	}
 
 	private fun rebuildTree() {
@@ -109,6 +115,24 @@ class MainActivity: AppCompatActivity() {
 			}
 
 			fun treeAddDir(node: TreeNode) {
+				fun collectSongs(node: TreeNode): List<String> =
+					if((node.value as TreeNodeValue).canExpand) {
+						node.children.map { collectSongs(it) }.flatten()
+					} else {
+						listOf(treeGetFullPath(node))
+					}
+
+				lifecycleScope.launch(Dispatchers.IO) {
+					collectSongs(node).let {
+						if(addSongsRandomized()) {
+							it.shuffled()
+						} else {
+							it
+						}.forEach { song ->
+							channel.send(EmoMsg.Add(song))
+						}
+					}
+				}
 			}
 
 			fun treeAddSong(node: TreeNode) {
@@ -260,6 +284,7 @@ class MainActivity: AppCompatActivity() {
 		}
 
 		rebuildTree()
+		setPlayerCallbacks()
 	}
 }
 
