@@ -3,11 +3,17 @@ package forty.two.chibimo
 import android.app.*
 import android.content.Intent
 import android.media.AudioAttributes
+import android.media.MediaMetadata
+import android.media.session.PlaybackState
 import android.os.Binder
 import android.os.IBinder
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import java.util.*
 
 /**
@@ -19,6 +25,8 @@ class PlayerService: Service() {
 	data class MyBinder(val playerService: PlayerService): Binder()
 
 	private var isStarted = false
+	private lateinit var mediaSession: MediaSessionCompat
+	private lateinit var mediaStyle: MediaStyle
 	private lateinit var builder: NotificationCompat.Builder
 
 	private val player = StatefulMediaPlayer().apply {
@@ -75,6 +83,13 @@ class PlayerService: Service() {
 			currentSong = song
 			duration = player.duration
 
+			mediaSession.setMetadata(
+				MediaMetadataCompat.Builder()
+					.putString(MediaMetadata.METADATA_KEY_TITLE, currentSong)
+					.putLong(MediaMetadata.METADATA_KEY_DURATION, duration.toLong())
+					.build()
+			)
+
 			progressTask = object: TimerTask() {
 				override fun run() {
 					try {
@@ -125,27 +140,39 @@ class PlayerService: Service() {
 			Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
 		)
 
+		mediaSession = MediaSessionCompat(this, "PlayerService")
+		mediaStyle = MediaStyle().setMediaSession(mediaSession.sessionToken)
 		builder = NotificationCompat.Builder(this, CHANNEL_ID)
+			.setStyle(mediaStyle)
 			.setContentIntent(intent)
 			.setSmallIcon(R.drawable.ic_baseline_library_music_24)
 			.setOnlyAlertOnce(true)
 			.setOngoing(true)
-			.setPriority(NotificationCompat.PRIORITY_LOW)
 		return builder.build()
 	}
 
 	private fun updateProgress() {
 		progressCallback?.let { it(position, duration) }
+		mediaSession.setPlaybackState(
+			PlaybackStateCompat.Builder()
+				.setState(
+					PlaybackState.STATE_PLAYING,
+					position.toLong(),
+					1f
+				)
+				.setActions(PlaybackState.ACTION_PLAY or PlaybackState.ACTION_SEEK_TO)
+				.addCustomAction(
+					PlaybackStateCompat.CustomAction.Builder("foo", "foo name", R.drawable.ic_baseline_pause_24).run {
+						println("foo called")
+						build()
+					})
+				.build()
+		)
 
 		with(NotificationManagerCompat.from(this)) {
 			notify(
 				42,
 				builder
-					.setContentText(getString(R.string.playing, currentSong))
-					.setStyle(
-						NotificationCompat.BigTextStyle()
-							.bigText(getString(R.string.playing, currentSong))
-					)
 					.setProgress(duration, position, false)
 					.build()
 			)
