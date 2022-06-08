@@ -14,6 +14,7 @@ sealed class EmoMsg {
 
 	data class Add(val song: String): EmoMsg()
 	data class Repeat(val song: String): EmoMsg()
+	data class Complete(val song: String): EmoMsg()
 	object Clear: EmoMsg()
 }
 
@@ -34,6 +35,7 @@ class EmoConnection(
 				EmoMsg.GetQueue -> channel.send(EmoMsg.RespQueue(getQueue()))
 				is EmoMsg.Add -> add(msg.song)
 				is EmoMsg.Repeat -> repeat(msg.song)
+				is EmoMsg.Complete -> complete(msg.song)
 				EmoMsg.Clear -> clear()
 				else -> {}
 			}
@@ -70,6 +72,10 @@ class EmoConnection(
 		}
 
 		add(song)
+	}
+
+	private fun complete(song: String) {
+		tcpClient.sendLine("complete $song")
 	}
 
 	private fun clear() {

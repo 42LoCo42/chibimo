@@ -156,9 +156,9 @@ class MainActivity: AppCompatActivity() {
 		}
 
 		findViewById<Button>(R.id.btnNext).setOnClickListener {
-			connectToEmo {
-				it.send(EmoMsg.GetNext)
-				playSong((it.receive() as EmoMsg.RespNext).next)
+			connectToPlayer {
+				it.getAndPlayNext()
+				setPlayerCallbacks()
 			}
 		}
 

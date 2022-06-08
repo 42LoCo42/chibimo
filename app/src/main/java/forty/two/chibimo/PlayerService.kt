@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaMetadata
-import android.media.session.PlaybackState
 import android.os.Binder
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
@@ -49,7 +48,7 @@ class PlayerService: LifecycleService() {
 				.setUsage(AudioAttributes.USAGE_MEDIA).build()
 		)
 		setOnCompletionListener {
-			release()
+			getAndPlayNext()
 		}
 	}
 	private lateinit var progressTask: TimerTask
@@ -118,6 +117,14 @@ class PlayerService: LifecycleService() {
 
 	private fun complete(song: String, completion: Int) {
 		Log.d("player", "completed $song at $completion")
+		if(completion >= 80) withEmo { it.send(EmoMsg.Complete(song)) }
+	}
+
+	fun getAndPlayNext() {
+		withEmo {
+			it.send(EmoMsg.GetNext)
+			play((it.receive() as EmoMsg.RespNext).next)
+		}
 	}
 
 	fun play(song: String) {
@@ -126,6 +133,7 @@ class PlayerService: LifecycleService() {
 
 		try {
 			with(player) {
+				println(player.state)
 				reset()
 				setDataSource(this@PlayerService, file.uri)
 				prepare()
@@ -148,14 +156,14 @@ class PlayerService: LifecycleService() {
 						position = player.currentPosition
 						updateProgress()
 					} catch(e: Exception) {
-						e.printStackTrace()
-						hardStop()
+						Log.e("PlayerService", "progress timer", e)
 					}
 				}
 			}
 			Timer().scheduleAtFixedRate(progressTask, 0, 500)
 		} catch(e: Exception) {
-			Toast.makeText(this, getString(R.string.play_error, e.localizedMessage), Toast.LENGTH_LONG).show()
+			Log.e("PlayerService", "play()", e)
+			toastController.show(getString(R.string.play_error, e.localizedMessage), Toast.LENGTH_LONG)
 		}
 	}
 
@@ -212,7 +220,7 @@ class PlayerService: LifecycleService() {
 		mediaSession.setPlaybackState(
 			PlaybackStateCompat.Builder()
 				.setState(
-					PlaybackState.STATE_PLAYING,
+					PlaybackStateCompat.STATE_PLAYING,
 					position.toLong(),
 					1f
 				)
