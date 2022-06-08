@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.documentfile.provider.DocumentFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 
 /**
  * @author: Leon Schumacher (Matrikelnummer 19101)
@@ -30,6 +32,10 @@ fun Context.connectToPlayer(callback: (PlayerService) -> Unit) {
 
 		override fun onServiceDisconnected(p0: ComponentName?) {}
 	}, 0)
+}
+
+fun Context.connectToEmo(callback: suspend CoroutineScope.(Channel<EmoMsg>) -> Unit) {
+	connectToPlayer { it.withEmo { c -> callback(c) } }
 }
 
 fun divMod(num: Int, modulus: Int): Pair<Int, Int> {

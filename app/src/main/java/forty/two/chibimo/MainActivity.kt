@@ -7,19 +7,15 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.*
+import android.widget.Button
+import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 
 class MainActivity: AppCompatActivity() {
-	private val channel = Channel<EmoMsg>()
-	private val toastController = ToastController(this)
-
 	private var seekBarInUse = false
 	private lateinit var seekBar: SeekBar
 	private lateinit var txtPlaying: TextView
@@ -52,18 +48,6 @@ class MainActivity: AppCompatActivity() {
 		}
 	}
 
-	private fun alertConnecting() {
-		toastController.show(R.string.connecting, Toast.LENGTH_LONG)
-	}
-
-	private fun alertConnected() {
-		toastController.show(getString(R.string.connected), Toast.LENGTH_LONG)
-	}
-
-	private fun alertConnectionError(error: String) {
-		toastController.show(getString(R.string.connection_error, error), Toast.LENGTH_LONG)
-	}
-
 	private fun longTapPlaySongs() =
 		PreferenceManager.getDefaultSharedPreferences(this).getBoolean("longTapPlaysSongs", false)
 
@@ -78,9 +62,7 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	private fun addSong(song: String) {
-		lifecycleScope.launch(Dispatchers.IO) {
-			channel.send(EmoMsg.Add(song))
-		}
+		connectToEmo { it.send(EmoMsg.Add(song)) }
 	}
 
 	private fun rebuildMediaTree() {
@@ -107,11 +89,11 @@ class MainActivity: AppCompatActivity() {
 					addSong(it.getMediaPath())
 				}
 			}, { all ->
-				lifecycleScope.launch(Dispatchers.IO) {
+				connectToEmo { emo ->
 					all.map { it.getMediaPath() }.let {
 						if(addSongsRandomized()) it.shuffled() else it
 					}.forEach {
-						channel.send(EmoMsg.Add(it))
+						emo.send(EmoMsg.Add(it))
 					}
 				}
 			})
@@ -131,24 +113,6 @@ class MainActivity: AppCompatActivity() {
 		val perm = Manifest.permission.READ_EXTERNAL_STORAGE
 		if(checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
 			requestPermissions(arrayOf(perm), 37812)
-		}
-
-		val address = PreferenceManager.getDefaultSharedPreferences(this@MainActivity).getString("emoURL", "")
-		if(address.isNullOrBlank()) {
-			alertConnectionError(getString(R.string.not_set))
-		} else {
-			alertConnecting()
-			lifecycleScope.launch(Dispatchers.IO) {
-				EmoConnection(channel, address, {
-					runOnUiThread {
-						alertConnected()
-					}
-				}) {
-					runOnUiThread {
-						alertConnectionError("$address (${it.localizedMessage})")
-					}
-				}.start()
-			}
 		}
 
 		fun setPlayPauseBtnIcon(playing: Boolean) {
@@ -192,24 +156,22 @@ class MainActivity: AppCompatActivity() {
 		}
 
 		findViewById<Button>(R.id.btnNext).setOnClickListener {
-			lifecycleScope.launch {
-				channel.send(EmoMsg.GetNext)
-				playSong((channel.receive() as EmoMsg.RespNext).next)
+			connectToEmo {
+				it.send(EmoMsg.GetNext)
+				playSong((it.receive() as EmoMsg.RespNext).next)
 			}
 		}
 
 		findViewById<Button>(R.id.btnRepeat).setOnClickListener {
 			connectToPlayer {
-				lifecycleScope.launch {
-					channel.send(EmoMsg.Repeat(it.currentSong))
-				}
+				it.withEmo { emo -> emo.send(EmoMsg.Repeat(it.currentSong)) }
 			}
 		}
 
 		findViewById<Button>(R.id.btnStop).setOnClickListener {
-			connectToPlayer { it.hardStop() }
-			lifecycleScope.launch(Dispatchers.IO) {
-				channel.send(EmoMsg.Clear)
+			connectToPlayer {
+				it.hardStop()
+				it.withEmo { emo -> emo.send(EmoMsg.Clear) }
 			}
 
 			seekBar.progress = 0
