@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.ui
 
 import android.annotation.SuppressLint
 import android.content.Context

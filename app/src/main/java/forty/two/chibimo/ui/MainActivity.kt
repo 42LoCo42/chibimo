@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -13,6 +13,11 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import forty.two.chibimo.R
+import forty.two.chibimo.connectToEmo
+import forty.two.chibimo.connectToPlayer
+import forty.two.chibimo.millisToTimeString
+import forty.two.chibimo.net.EmoMsg
 import kotlin.concurrent.thread
 
 class MainActivity: AppCompatActivity() {

@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.media
 
 import android.content.Context
 import android.media.MediaPlayer

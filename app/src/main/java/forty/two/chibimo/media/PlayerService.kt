@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.media
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -20,6 +20,13 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.media.app.NotificationCompat.MediaStyle
 import androidx.preference.PreferenceManager
+import forty.two.chibimo.R
+import forty.two.chibimo.child
+import forty.two.chibimo.net.EmoConnection
+import forty.two.chibimo.net.EmoMsg
+import forty.two.chibimo.ui.MainActivity
+import forty.two.chibimo.ui.ToastController
+import forty.two.chibimo.ui.getMusicDir
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel

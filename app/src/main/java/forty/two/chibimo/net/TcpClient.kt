@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.net
 
 import java.io.BufferedReader
 import java.io.BufferedWriter

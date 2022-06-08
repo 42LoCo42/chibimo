@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.ui
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.documentfile.provider.DocumentFile
 import com.unnamed.b.atv.model.TreeNode
 import com.unnamed.b.atv.view.AndroidTreeView
+import forty.two.chibimo.R
 
 /**
  * @author: Leon Schumacher (Matrikelnummer 19101)

@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.ui
 
 import android.content.Context
 import android.content.Intent
@@ -10,6 +10,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import forty.two.chibimo.R
 
 const val MUSIC_DIRECTORY = "musicDirectory"
 
