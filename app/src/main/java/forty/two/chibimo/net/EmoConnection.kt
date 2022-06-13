@@ -20,15 +20,26 @@ sealed class EmoMsg {
 
 class EmoConnection(
 	private val channel: Channel<EmoMsg>,
-	addressAndPort: String,
-	onConnected: () -> Unit,
-	onError: (Exception) -> Unit,
+	private val addressAndPort: String,
+	private val onConnected: () -> Unit,
+	private val onError: (Exception) -> Unit,
 ) {
-	private val tcpClient = TcpClient(addressAndPort, onConnected, onError)
+	var isOnline = false
+		private set
+
+	private lateinit var tcpClient: TcpClient
+	private val queue = ArrayDeque<String>()
 
 	suspend fun start() {
+		tcpClient = TcpClient(addressAndPort, {
+			isOnline = true
+			onConnected()
+		}) {
+			isOnline = false
+			onError(it)
+		}
 		tcpClient.start()
-		println("client started")
+
 		while(true) {
 			when(val msg = channel.receive()) {
 				EmoMsg.GetNext -> channel.send(EmoMsg.RespNext(getNext()))
@@ -43,30 +54,41 @@ class EmoConnection(
 	}
 
 	private fun getNext(): String {
-		tcpClient.sendLine("next")
-		return tcpClient.recvLine()
+		val song = if(isOnline) {
+			tcpClient.sendLine("next")
+			tcpClient.recvLine()
+		} else {
+			"TODO"
+		}
+		queue.add(song)
+		return song
 	}
 
 	private fun getQueue(): List<String> {
-		val queue = mutableListOf<String>()
-		tcpClient.sendLine("queue")
-		while(true) {
-			val line = tcpClient.recvLine()
-			if(line == "end") break
-			queue.add(line.split(Regex(" "), 2)[1])
+		return if(isOnline) {
+			val queue = mutableListOf<String>()
+			tcpClient.sendLine("queue")
+			while(true) {
+				val line = tcpClient.recvLine()
+				if(line == "end") break
+				queue.add(line.split(Regex(" "), 2)[1])
+			}
+			queue
+		} else {
+			queue
 		}
-		return queue
 	}
 
 	private fun add(song: String) {
-		tcpClient.sendLine("add $song")
-		tcpClient.recvLine()
+		if(isOnline) {
+			tcpClient.sendLine("add $song")
+			tcpClient.recvLine()
+		}
+		queue.add(song)
 	}
 
 	private fun repeat(song: String) {
 		val queue = getQueue()
-		println("repeating $song")
-		println(queue)
 		if(queue.size >= 2 && queue[1] != song) {
 			clear()
 		}
@@ -75,10 +97,15 @@ class EmoConnection(
 	}
 
 	private fun complete(song: String) {
-		tcpClient.sendLine("complete $song")
+		if(isOnline) {
+			tcpClient.sendLine("complete $song")
+		}
 	}
 
 	private fun clear() {
-		tcpClient.sendLine("clear")
+		if(isOnline) {
+			tcpClient.sendLine("clear")
+		}
+		queue.clear()
 	}
 }

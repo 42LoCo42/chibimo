@@ -61,6 +61,11 @@ class PlayerService: LifecycleService() {
 	private lateinit var progressTask: TimerTask
 	var progressCallback: ((Int, Int) -> Unit)? = null
 
+	var onConnect: () -> Unit = {}
+	var onDisconnect: () -> Unit = {}
+	var isConnected: Boolean = false
+		private set
+
 	var currentSong = ""
 		private set
 
@@ -95,22 +100,8 @@ class PlayerService: LifecycleService() {
 		if(!isStarted) {
 			startForeground(42, createNotification())
 			isStarted = true
-
-			val address = PreferenceManager.getDefaultSharedPreferences(this).getString("emoURL", "")
-			if(address.isNullOrBlank()) {
-				alertConnectionError(getString(R.string.not_set))
-			} else {
-				alertConnecting()
-
-				withEmo {
-					EmoConnection(channel, address, {
-						alertConnected()
-					}, {
-						alertConnectionError("$address (${it.localizedMessage})")
-					}).start()
-				}
-			}
 		}
+		connect()
 		return START_NOT_STICKY
 	}
 
@@ -120,6 +111,27 @@ class PlayerService: LifecycleService() {
 				NotificationChannel(CHANNEL_ID, CHANNEL_ID, NotificationManager.IMPORTANCE_LOW)
 			)
 		super.onCreate()
+	}
+
+	fun connect() {
+		val address = PreferenceManager.getDefaultSharedPreferences(this).getString("emoURL", "")
+		if(address.isNullOrBlank()) {
+			alertConnectionError(getString(R.string.not_set))
+			return
+		}
+
+		// alertConnecting()
+		withEmo {
+			EmoConnection(channel, address, {
+				// alertConnected()
+				isConnected = true
+				onConnect()
+			}, {
+				// alertConnectionError("$address (${it.localizedMessage})")
+				isConnected = false
+				onDisconnect()
+			}).start()
+		}
 	}
 
 	private fun complete(song: String, completion: Int) {

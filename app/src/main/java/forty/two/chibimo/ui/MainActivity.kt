@@ -1,9 +1,7 @@
 package forty.two.chibimo.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -12,6 +10,7 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
 import forty.two.chibimo.connectToEmo
@@ -34,6 +33,10 @@ class MainActivity: AppCompatActivity() {
 	override fun onOptionsItemSelected(item: MenuItem) = when(item.itemId) {
 		R.id.action_settings -> {
 			startActivity(Intent(this, SettingsActivity::class.java))
+			true
+		}
+		R.id.action_reconnect -> {
+			connectToPlayer { it.connect() }
 			true
 		}
 		else -> true
@@ -113,12 +116,8 @@ class MainActivity: AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_main)
-		setSupportActionBar(findViewById(R.id.toolbar))
-
-		val perm = Manifest.permission.READ_EXTERNAL_STORAGE
-		if(checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) {
-			requestPermissions(arrayOf(perm), 37812)
-		}
+		val toolbar = findViewById<Toolbar>(R.id.toolbar)
+		setSupportActionBar(toolbar)
 
 		fun setPlayPauseBtnIcon(playing: Boolean) {
 			with(findViewById<Button>(R.id.btnPlayPause)) {
@@ -182,6 +181,24 @@ class MainActivity: AppCompatActivity() {
 			seekBar.progress = 0
 			txtPlaying.text = ""
 			txtTime.text = ""
+		}
+
+		connectToPlayer {
+			fun updateToolbar(connected: Boolean) {
+				runOnUiThread {
+					if(connected) {
+						toolbar.title = getString(R.string.app_name)
+						toolbar.setBackgroundColor(resources.getColor(R.color.purple_200, theme))
+					} else {
+						toolbar.title = getString(R.string.app_name) + getString(R.string.offline)
+						toolbar.setBackgroundColor(resources.getColor(R.color.design_default_color_error, theme))
+					}
+				}
+			}
+
+			it.onConnect = { updateToolbar(true) }
+			it.onDisconnect = { updateToolbar(false) }
+			updateToolbar(it.isConnected)
 		}
 
 		rebuildMediaTree()

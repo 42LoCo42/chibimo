@@ -23,6 +23,7 @@ class MediaTree(
 		dir.listFiles().sortedBy { it.name }.forEach {
 			if(it == null) return@forEach
 			val name = it.name ?: return@forEach
+			if(name.startsWith(".")) return@forEach
 			if(it.isFile) {
 				node.addChild(MediaTreeNode(MediaTreeItem(name, indent, false)))
 			} else {
