@@ -10,6 +10,9 @@ import forty.two.chibimo.media.PlayerService
 import forty.two.chibimo.net.EmoMsg
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import org.ktorm.database.Database
+import org.ktorm.entity.Entity
+import org.ktorm.schema.Table
 
 /**
  * @author: Leon Schumacher (Matrikelnummer 19101)
@@ -50,4 +53,17 @@ fun millisToTimeString(millis: Int): String {
 	return (if(hours > 0) "$hours h " else "") +
 		(if(minutes > 0) "$minutes min " else "") +
 		"$seconds s"
+}
+
+fun <T: Entity<T>> Table<T>.mkCreationExpr(): String {
+	val columns = columns.joinToString(", ") {
+		"${it.name} ${it.sqlType.typeName} " + if(primaryKeys.contains(it)) "primary key" else "" + " not null"
+	}
+	return "create table if not exists $tableName ($columns);"
+}
+
+fun <T: Entity<T>> Database.tryCreateTable(table: Table<T>): Boolean {
+	useConnection {
+		return it.prepareStatement(table.mkCreationExpr()).execute()
+	}
 }

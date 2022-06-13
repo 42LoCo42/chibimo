@@ -3,6 +3,7 @@ package forty.two.chibimo.ui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
@@ -12,11 +13,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.preference.PreferenceManager
-import forty.two.chibimo.R
-import forty.two.chibimo.connectToEmo
-import forty.two.chibimo.connectToPlayer
-import forty.two.chibimo.millisToTimeString
+import forty.two.chibimo.*
+import forty.two.chibimo.db.Changes
+import forty.two.chibimo.db.Songs
 import forty.two.chibimo.net.EmoMsg
+import org.ktorm.database.Database
+import org.ktorm.dsl.from
+import org.ktorm.dsl.select
+import java.sql.DriverManager
 import kotlin.concurrent.thread
 
 class MainActivity: AppCompatActivity() {
@@ -118,6 +122,7 @@ class MainActivity: AppCompatActivity() {
 		setContentView(R.layout.activity_main)
 		val toolbar = findViewById<Toolbar>(R.id.toolbar)
 		setSupportActionBar(toolbar)
+		DriverManager.registerDriver(org.sqldroid.SQLDroidDriver())
 
 		fun setPlayPauseBtnIcon(playing: Boolean) {
 			with(findViewById<Button>(R.id.btnPlayPause)) {
@@ -203,5 +208,16 @@ class MainActivity: AppCompatActivity() {
 
 		rebuildMediaTree()
 		setPlayerCallbacks()
+
+		thread {
+			getExternalFilesDir(null)?.apply {
+				val db = Database.connect("jdbc:sqlite:$absolutePath/songs.db")
+				db.tryCreateTable(Songs)
+				db.tryCreateTable(Changes)
+
+				Log.e("main - songs", db.from(Songs).select().totalRecords.toString())
+				Log.e("main - changes", db.from(Changes).select().totalRecords.toString())
+			}
+		}
 	}
 }
