@@ -26,6 +26,7 @@ Als Freies Projekt unterliegt das emo-System keinerlei Risiken.
 Sollten die ursprünglichen Autoren das Projekt nicht mehr fortsetzen können,
 ist dank der Lizenz eine Fortführung durch die Community möglich.
 <div style="page-break-before:always"/>
+
 # 2 Vision der Lösung
 ## 2.1 Vision
 chibimo soll ein vollständiger emo-Client für Android werden.
@@ -46,6 +47,7 @@ emo ist primär als ein Do-it-yourself-Projekt gedacht,
 bei welchem der Nutzer zumindest über einen eigenen Server verfügt.
 Allerdings steht nichts der zukünftigen Anbietung von emo als remote-Service im Weg.
 <div style="page-break-before:always"/>
+
 # 3 Fokus und Grenzen
 ## 3.1 Umfang des ersten Release
 Das erste Release von emo selbst verfügte über ein sehr simples globales Kommunikationsprotokoll,
@@ -72,6 +74,7 @@ emo-Provider können zum Multiplexen mehrere emo-Server-Instanzen das Tool
 Weiterhin wird emo keine Kommunikation über TLS implementieren.
 Ist dies gewünscht, können Tools wie z.B. [stunnel](https://www.stunnel.org) benutzt werden.
 <div style="page-break-before:always"/>
+
 # 4 Geschäftskontext
 ## 4.1 Stakeholder
 Das emo-System ist ein Freies Projekt und wird nicht im Auftrag von Stakeholdern entwickelt.
