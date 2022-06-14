@@ -2,11 +2,9 @@
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
 	  xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<item android:title="@string/reconnect" android:id="@+id/action_reconnect" app:showAsAction="ifRoom"
-		  android:icon="@drawable/ic_baseline_refresh_24"/>
 	<item
 		android:id="@+id/action_settings"
-		android:icon="@drawable/ic_baseline_settings_24"
 		android:title="@string/settings"
-		app:showAsAction="ifRoom"/>
+		app:showAsAction="never"/>
+	<item android:title="@string/download_song_db" android:id="@+id/action_get_db" app:showAsAction="never"/>
 </menu>

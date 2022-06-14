@@ -3,7 +3,6 @@ package forty.two.chibimo.ui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
@@ -12,14 +11,14 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import forty.two.chibimo.*
-import forty.two.chibimo.db.Changes
-import forty.two.chibimo.db.Songs
-import forty.two.chibimo.net.EmoMsg
-import org.ktorm.database.Database
-import org.ktorm.dsl.from
-import org.ktorm.dsl.select
+import forty.two.chibimo.R
+import forty.two.chibimo.emo.EmoConnection
+import forty.two.chibimo.utils.connectToPlayer
+import forty.two.chibimo.utils.millisToTimeString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.sql.DriverManager
 import kotlin.concurrent.thread
 
@@ -39,8 +38,25 @@ class MainActivity: AppCompatActivity() {
 			startActivity(Intent(this, SettingsActivity::class.java))
 			true
 		}
-		R.id.action_reconnect -> {
-			connectToPlayer { it.connect() }
+		R.id.action_get_db -> {
+			connectToPlayer {
+				it.withEmo {
+					lifecycleScope.launch(Dispatchers.IO) {
+						try {
+							val count = setSongsDBFromRawSongs(
+								EmoConnection(
+									PreferenceManager
+										.getDefaultSharedPreferences(this@MainActivity)
+										.getString("emoURL", null) ?: ""
+								).getSongs()
+							)
+							it.toastController.show(getString(R.string.imported_songs, count))
+						} catch(e: Exception) {
+							it.toastController.show(getString(R.string.connection_error, e.localizedMessage))
+						}
+					}
+				}
+			}
 			true
 		}
 		else -> true
@@ -74,7 +90,10 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	private fun addSong(song: String) {
-		connectToEmo { it.send(EmoMsg.Add(song)) }
+		connectToPlayer {
+			it.withEmo { add(song) }
+			it.toastController.show(getString(R.string.added_song, song))
+		}
 	}
 
 	private fun rebuildMediaTree() {
@@ -101,11 +120,11 @@ class MainActivity: AppCompatActivity() {
 					addSong(it.getMediaPath())
 				}
 			}, { all ->
-				connectToEmo { emo ->
+				connectToPlayer {
 					all.map { it.getMediaPath() }.let {
 						if(addSongsRandomized()) it.shuffled() else it
-					}.forEach {
-						emo.send(EmoMsg.Add(it))
+					}.forEach { song ->
+						it.withEmo { add(song) }
 					}
 				}
 			})
@@ -173,51 +192,23 @@ class MainActivity: AppCompatActivity() {
 
 		findViewById<Button>(R.id.btnRepeat).setOnClickListener {
 			connectToPlayer {
-				it.withEmo { emo -> emo.send(EmoMsg.Repeat(it.currentSong)) }
+				it.withEmo { add(it.currentSong) }
 			}
 		}
 
 		findViewById<Button>(R.id.btnStop).setOnClickListener {
 			connectToPlayer {
 				it.hardStop()
-				it.withEmo { emo -> emo.send(EmoMsg.Clear) }
+				it.withEmo { clear() }
 			}
 
 			seekBar.progress = 0
+			seekBar.max = 1
 			txtPlaying.text = ""
 			txtTime.text = ""
 		}
 
-		connectToPlayer {
-			fun updateToolbar(connected: Boolean) {
-				runOnUiThread {
-					if(connected) {
-						toolbar.title = getString(R.string.app_name)
-						toolbar.setBackgroundColor(resources.getColor(R.color.purple_200, theme))
-					} else {
-						toolbar.title = getString(R.string.app_name) + getString(R.string.offline)
-						toolbar.setBackgroundColor(resources.getColor(R.color.design_default_color_error, theme))
-					}
-				}
-			}
-
-			it.onConnect = { updateToolbar(true) }
-			it.onDisconnect = { updateToolbar(false) }
-			updateToolbar(it.isConnected)
-		}
-
 		rebuildMediaTree()
 		setPlayerCallbacks()
-
-		thread {
-			getExternalFilesDir(null)?.apply {
-				val db = Database.connect("jdbc:sqlite:$absolutePath/songs.db")
-				db.tryCreateTable(Songs)
-				db.tryCreateTable(Changes)
-
-				Log.e("main - songs", db.from(Songs).select().totalRecords.toString())
-				Log.e("main - changes", db.from(Changes).select().totalRecords.toString())
-			}
-		}
 	}
 }

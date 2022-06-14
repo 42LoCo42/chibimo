@@ -21,6 +21,8 @@
 	<string name="emo_url">emo URL</string>
 	<string name="playing">Playing %s</string>
 	<string name="long_tap_action">Long tap action</string>
-	<string name="offline">" - OFFLINE"</string>
-	<string name="reconnect">Reconnect</string>
+	<string name="added_song">Added %s</string>
+	<string name="emo_error">Emo error: %s</string>
+	<string name="download_song_db">Download song DB</string>
+	<string name="imported_songs">Imported %d songs</string>
 </resources>

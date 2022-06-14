@@ -1,6 +1,5 @@
 package forty.two.chibimo.ui
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -18,7 +17,6 @@ class ToastController(private val context: Context) {
 		show(context.getString(stringID), duration)
 	}
 
-	@SuppressLint("ShowToast")
 	fun show(text: String, duration: Int = Toast.LENGTH_SHORT) {
 		handler.post {
 			cancel()

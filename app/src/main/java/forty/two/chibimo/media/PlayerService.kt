@@ -17,20 +17,17 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.lifecycleScope
 import androidx.media.app.NotificationCompat.MediaStyle
-import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
-import forty.two.chibimo.child
-import forty.two.chibimo.net.EmoConnection
-import forty.two.chibimo.net.EmoMsg
+import forty.two.chibimo.db.Changes
+import forty.two.chibimo.db.Songs
+import forty.two.chibimo.emo.Emo
 import forty.two.chibimo.ui.MainActivity
 import forty.two.chibimo.ui.ToastController
 import forty.two.chibimo.ui.getMusicDir
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
+import forty.two.chibimo.utils.child
+import forty.two.chibimo.utils.tryCreateTable
+import org.ktorm.database.Database
 import java.util.*
 
 /**
@@ -41,8 +38,16 @@ const val CHANNEL_ID = "chibimoPlayer"
 class PlayerService: LifecycleService() {
 	data class MyBinder(val playerService: PlayerService): Binder()
 
-	private val toastController = ToastController(this)
-	private val channel = Channel<EmoMsg>()
+	val toastController = ToastController(this)
+	private val db: Database by lazy {
+		Database.connect("jdbc:sqlite:${getExternalFilesDir(null)}/songs.db").apply {
+			tryCreateTable(Songs)
+			tryCreateTable(Changes)
+		}
+	}
+	private val emo: Emo by lazy {
+		Emo(db)
+	}
 
 	private var isStarted = false
 	private lateinit var mediaSession: MediaSessionCompat
@@ -61,34 +66,11 @@ class PlayerService: LifecycleService() {
 	private lateinit var progressTask: TimerTask
 	var progressCallback: ((Int, Int) -> Unit)? = null
 
-	var onConnect: () -> Unit = {}
-	var onDisconnect: () -> Unit = {}
-	var isConnected: Boolean = false
-		private set
-
 	var currentSong = ""
 		private set
 
 	private var position: Int = 0
 	private var duration: Int = 0
-
-	fun withEmo(callback: suspend CoroutineScope.(Channel<EmoMsg>) -> Unit) {
-		lifecycleScope.launch(Dispatchers.IO) {
-			callback(channel)
-		}
-	}
-
-	private fun alertConnecting() {
-		toastController.show(R.string.connecting, Toast.LENGTH_LONG)
-	}
-
-	private fun alertConnected() {
-		toastController.show(getString(R.string.connected), Toast.LENGTH_LONG)
-	}
-
-	private fun alertConnectionError(error: String) {
-		toastController.show(getString(R.string.connection_error, error), Toast.LENGTH_LONG)
-	}
 
 	override fun onBind(intent: Intent): IBinder {
 		super.onBind(intent)
@@ -101,7 +83,6 @@ class PlayerService: LifecycleService() {
 			startForeground(42, createNotification())
 			isStarted = true
 		}
-		connect()
 		return START_NOT_STICKY
 	}
 
@@ -113,37 +94,21 @@ class PlayerService: LifecycleService() {
 		super.onCreate()
 	}
 
-	fun connect() {
-		val address = PreferenceManager.getDefaultSharedPreferences(this).getString("emoURL", "")
-		if(address.isNullOrBlank()) {
-			alertConnectionError(getString(R.string.not_set))
-			return
-		}
-
-		// alertConnecting()
-		withEmo {
-			EmoConnection(channel, address, {
-				// alertConnected()
-				isConnected = true
-				onConnect()
-			}, {
-				// alertConnectionError("$address (${it.localizedMessage})")
-				isConnected = false
-				onDisconnect()
-			}).start()
+	fun withEmo(block: Emo.() -> Unit) {
+		try {
+			block(emo)
+		} catch(e: Exception) {
+			toastController.show(getString(R.string.emo_error, e.localizedMessage))
 		}
 	}
 
 	private fun complete(song: String, completion: Int) {
 		Log.d("player", "completed $song at $completion")
-		if(completion >= 80) withEmo { it.send(EmoMsg.Complete(song)) }
+		if(completion >= 80) withEmo { complete(song) }
 	}
 
 	fun getAndPlayNext() {
-		withEmo {
-			it.send(EmoMsg.GetNext)
-			play((it.receive() as EmoMsg.RespNext).next)
-		}
+		withEmo { play(next()) }
 	}
 
 	fun play(song: String) {
@@ -152,7 +117,6 @@ class PlayerService: LifecycleService() {
 
 		try {
 			with(player) {
-				println(player.state)
 				reset()
 				setDataSource(this@PlayerService, file.uri)
 				prepare()

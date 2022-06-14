@@ -1,4 +1,4 @@
-package forty.two.chibimo
+package forty.two.chibimo.utils
 
 import android.content.ComponentName
 import android.content.Context
@@ -7,11 +7,10 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.documentfile.provider.DocumentFile
 import forty.two.chibimo.media.PlayerService
-import forty.two.chibimo.net.EmoMsg
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
 import org.ktorm.database.Database
 import org.ktorm.entity.Entity
+import org.ktorm.expression.FunctionExpression
+import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
 
 /**
@@ -39,10 +38,6 @@ fun Context.connectToPlayer(callback: (PlayerService) -> Unit) {
 	}, 0)
 }
 
-fun Context.connectToEmo(callback: suspend CoroutineScope.(Channel<EmoMsg>) -> Unit) {
-	connectToPlayer { it.withEmo { c -> callback(c) } }
-}
-
 fun divMod(num: Int, modulus: Int): Pair<Int, Int> {
 	return (num / modulus) to (num % modulus)
 }
@@ -66,4 +61,18 @@ fun <T: Entity<T>> Database.tryCreateTable(table: Table<T>): Boolean {
 	useConnection {
 		return it.prepareStatement(table.mkCreationExpr()).execute()
 	}
+}
+
+// https://github.com/kotlin-orm/ktorm/blob/master/ktorm-support-sqlite/src/main/kotlin/org/ktorm/support/sqlite/Functions.kt#L126
+fun <T: Any> ColumnDeclaring<T>.ifNull(right: ColumnDeclaring<T>): FunctionExpression<T> {
+	return FunctionExpression(
+		functionName = "ifnull",
+		arguments = listOf(this, right).map { it.asExpression() },
+		sqlType = sqlType
+	)
+}
+
+// https://github.com/kotlin-orm/ktorm/blob/master/ktorm-support-sqlite/src/main/kotlin/org/ktorm/support/sqlite/Functions.kt#L138
+fun <T: Any> ColumnDeclaring<T>.ifNull(right: T?): FunctionExpression<T> {
+	return this.ifNull(wrapArgument(right))
 }

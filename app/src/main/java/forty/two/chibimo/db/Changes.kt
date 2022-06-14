@@ -15,5 +15,5 @@ interface Change: Entity<Change> {
 
 object Changes: Table<Change>("changes") {
 	val path = text("path").primaryKey().bindTo { it.path }
-	val change = int("count").bindTo { it.change }
+	val change = int("change").bindTo { it.change }
 }
