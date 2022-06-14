@@ -13,10 +13,6 @@ class ToastController(private val context: Context) {
 	private val handler = Handler(Looper.getMainLooper())
 	private lateinit var lastToast: Toast
 
-	fun show(stringID: Int, duration: Int = Toast.LENGTH_SHORT) {
-		show(context.getString(stringID), duration)
-	}
-
 	fun show(text: String, duration: Int = Toast.LENGTH_SHORT) {
 		handler.post {
 			cancel()

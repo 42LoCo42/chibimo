@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
 import forty.two.chibimo.utils.connectToPlayer
+import forty.two.chibimo.utils.getMusicDir
 import forty.two.chibimo.utils.millisToTimeString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -26,8 +26,8 @@ import forty.two.chibimo.emo.Emo
 import forty.two.chibimo.emo.EmoConnection
 import forty.two.chibimo.ui.MainActivity
 import forty.two.chibimo.ui.ToastController
-import forty.two.chibimo.ui.getMusicDir
 import forty.two.chibimo.utils.child
+import forty.two.chibimo.utils.getMusicDir
 import forty.two.chibimo.utils.tryCreateTable
 import org.ktorm.database.Database
 import java.util.*

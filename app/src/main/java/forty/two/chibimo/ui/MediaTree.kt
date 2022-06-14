@@ -34,13 +34,6 @@ class MediaTree(
 		}
 	}
 
-	private fun getAllChildren(node: MediaTreeNode): List<MediaTreeNode> =
-		if(node.value.canExpand) {
-			node.children.map { getAllChildren(it as MediaTreeNode) }.flatten()
-		} else {
-			listOf(node)
-		}
-
 	init {
 		val root = TreeNode.root()
 		super.mRoot = root
@@ -69,7 +62,7 @@ class MediaTree(
 			val value = rawValue as MediaTreeItem
 
 			if(value.canExpand) {
-				if(node is MediaTreeNode) onDirLongClick(getAllChildren(node))
+				if(node is MediaTreeNode) onDirLongClick(node.getAllChildren())
 			} else {
 				if(node is MediaTreeNode) onNodeLongClick(node)
 			}
@@ -89,6 +82,13 @@ data class MediaTreeNode(val value: MediaTreeItem): TreeNode(value) {
 			""
 		} + value.title
 	}
+
+	fun getAllChildren(): List<MediaTreeNode> =
+		if(value.canExpand) {
+			children.map { (it as MediaTreeNode).getAllChildren() }.flatten()
+		} else {
+			listOf(this)
+		}
 }
 
 data class MediaTreeItem(
