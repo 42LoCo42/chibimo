@@ -14,7 +14,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
-import forty.two.chibimo.emo.EmoConnection
 import forty.two.chibimo.utils.connectToPlayer
 import forty.two.chibimo.utils.millisToTimeString
 import kotlinx.coroutines.Dispatchers
@@ -39,24 +38,7 @@ class MainActivity: AppCompatActivity() {
 			true
 		}
 		R.id.action_get_db -> {
-			connectToPlayer {
-				it.withEmo {
-					lifecycleScope.launch(Dispatchers.IO) {
-						try {
-							val count = setSongsDBFromRawSongs(
-								EmoConnection(
-									PreferenceManager
-										.getDefaultSharedPreferences(this@MainActivity)
-										.getString("emoURL", null) ?: ""
-								).getSongs()
-							)
-							it.toastController.show(getString(R.string.imported_songs, count))
-						} catch(e: Exception) {
-							it.toastController.show(getString(R.string.connection_error, e.localizedMessage))
-						}
-					}
-				}
-			}
+			syncDBs()
 			true
 		}
 		else -> true
@@ -91,7 +73,7 @@ class MainActivity: AppCompatActivity() {
 
 	private fun addSong(song: String) {
 		connectToPlayer {
-			it.withEmo { add(song) }
+			it.safe { it.emo.add(song) }
 			it.toastController.show(getString(R.string.added_song, song))
 		}
 	}
@@ -124,7 +106,7 @@ class MainActivity: AppCompatActivity() {
 					all.map { it.getMediaPath() }.let {
 						if(addSongsRandomized()) it.shuffled() else it
 					}.forEach { song ->
-						it.withEmo { add(song) }
+						it.safe { it.emo.add(song) }
 					}
 				}
 			})
@@ -136,12 +118,27 @@ class MainActivity: AppCompatActivity() {
 		}
 	}
 
+	private fun syncDBs() {
+		connectToPlayer {
+			it.safe {
+				lifecycleScope.launch(Dispatchers.IO) {
+					it.emoConnection.uploadChanges(it.db)
+					val count = it.emo.setSongsDBFromRawSongs(it.emoConnection.getSongs())
+					it.toastController.show(getString(R.string.imported_songs, count))
+				}
+			}
+		}
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
 		setContentView(R.layout.activity_main)
 		val toolbar = findViewById<Toolbar>(R.id.toolbar)
 		setSupportActionBar(toolbar)
+
 		DriverManager.registerDriver(org.sqldroid.SQLDroidDriver())
+		syncDBs()
 
 		fun setPlayPauseBtnIcon(playing: Boolean) {
 			with(findViewById<Button>(R.id.btnPlayPause)) {
@@ -192,14 +189,14 @@ class MainActivity: AppCompatActivity() {
 
 		findViewById<Button>(R.id.btnRepeat).setOnClickListener {
 			connectToPlayer {
-				it.withEmo { add(it.currentSong) }
+				it.safe { it.emo.add(it.currentSong) }
 			}
 		}
 
 		findViewById<Button>(R.id.btnStop).setOnClickListener {
 			connectToPlayer {
 				it.hardStop()
-				it.withEmo { clear() }
+				it.safe { it.emo.clear() }
 			}
 
 			seekBar.progress = 0

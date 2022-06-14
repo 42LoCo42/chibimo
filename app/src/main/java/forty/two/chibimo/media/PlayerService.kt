@@ -18,10 +18,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.media.app.NotificationCompat.MediaStyle
+import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
 import forty.two.chibimo.db.Changes
 import forty.two.chibimo.db.Songs
 import forty.two.chibimo.emo.Emo
+import forty.two.chibimo.emo.EmoConnection
 import forty.two.chibimo.ui.MainActivity
 import forty.two.chibimo.ui.ToastController
 import forty.two.chibimo.ui.getMusicDir
@@ -39,14 +41,21 @@ class PlayerService: LifecycleService() {
 	data class MyBinder(val playerService: PlayerService): Binder()
 
 	val toastController = ToastController(this)
-	private val db: Database by lazy {
+	val db: Database by lazy {
 		Database.connect("jdbc:sqlite:${getExternalFilesDir(null)}/songs.db").apply {
 			tryCreateTable(Songs)
 			tryCreateTable(Changes)
 		}
 	}
-	private val emo: Emo by lazy {
+	val emo: Emo by lazy {
 		Emo(db)
+	}
+	val emoConnection: EmoConnection by lazy {
+		EmoConnection(
+			PreferenceManager
+				.getDefaultSharedPreferences(this)
+				.getString("emoURL", null) ?: ""
+		)
 	}
 
 	private var isStarted = false
@@ -94,9 +103,9 @@ class PlayerService: LifecycleService() {
 		super.onCreate()
 	}
 
-	fun withEmo(block: Emo.() -> Unit) {
+	fun safe(block: () -> Unit) {
 		try {
-			block(emo)
+			block()
 		} catch(e: Exception) {
 			toastController.show(getString(R.string.emo_error, e.localizedMessage))
 		}
@@ -104,11 +113,11 @@ class PlayerService: LifecycleService() {
 
 	private fun complete(song: String, completion: Int) {
 		Log.d("player", "completed $song at $completion")
-		if(completion >= 80) withEmo { complete(song) }
+		if(completion >= 80) safe { emo.complete(song) }
 	}
 
 	fun getAndPlayNext() {
-		withEmo { play(next()) }
+		safe { play(emo.next()) }
 	}
 
 	fun play(song: String) {

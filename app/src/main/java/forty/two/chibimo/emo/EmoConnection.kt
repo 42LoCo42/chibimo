@@ -1,7 +1,13 @@
 package forty.two.chibimo.emo
 
+import forty.two.chibimo.db.Changes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.ktorm.database.Database
+import org.ktorm.dsl.deleteAll
+import org.ktorm.dsl.forEach
+import org.ktorm.dsl.from
+import org.ktorm.dsl.select
 import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.InputStreamReader
@@ -32,6 +38,17 @@ class EmoConnection(
 	private fun BufferedWriter.writeLine(line: String) {
 		write(line + "\n")
 		flush()
+	}
+
+	suspend fun uploadChanges(db: Database) = withConnection { _, writer ->
+		writer.writeLine("mergeChanges")
+		db
+			.from(Changes)
+			.select()
+			.forEach {
+				writer.writeLine(it[Changes.path] + "\t" + it[Changes.change])
+			}
+		db.deleteAll(Changes)
 	}
 
 	suspend fun getSongs() = withConnection { reader, writer ->

@@ -29,7 +29,6 @@ class Emo(
 				.map {
 					it.getString(1)!! to it.getInt(2)
 				}
-			dataset.filter { it.second != 2 }.forEach(::println)
 			randomWeighted(dataset)?.let { add(it) } ?: throw IllegalArgumentException("Song database is empty!")
 		}
 		return queue.removeFirst()
@@ -52,6 +51,8 @@ class Emo(
 			set(it.path, song)
 			set(it.change, 1)
 		}
+
+		db.from(Changes).select().forEach { println("${it[Changes.path]}: ${it[Changes.change]}") }
 	}
 
 	fun setSongsDBFromRawSongs(rawSongs: List<String>): Int {
