@@ -107,6 +107,7 @@ class PlayerService: LifecycleService() {
 		try {
 			block()
 		} catch(e: Exception) {
+			Log.e("Connection error", null, e)
 			toastController.show(getString(R.string.emo_error, e.localizedMessage))
 		}
 	}

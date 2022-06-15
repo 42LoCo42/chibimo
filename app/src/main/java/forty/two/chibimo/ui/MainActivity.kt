@@ -3,6 +3,7 @@ package forty.two.chibimo.ui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
@@ -121,11 +122,14 @@ class MainActivity: AppCompatActivity() {
 
 	private fun syncDBs() {
 		connectToPlayer {
-			it.safe {
-				lifecycleScope.launch(Dispatchers.IO) {
+			lifecycleScope.launch(Dispatchers.IO) {
+				try {
 					it.emoConnection.uploadChanges(it.db)
 					val count = it.emo.setSongsDBFromRawSongs(it.emoConnection.getSongs())
 					it.toastController.show(getString(R.string.imported_songs, count))
+				} catch(e: Exception) {
+					Log.e("Connection error", null, e)
+					it.toastController.show(getString(R.string.emo_error, e.localizedMessage))
 				}
 			}
 		}
