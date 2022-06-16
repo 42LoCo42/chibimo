@@ -39,7 +39,7 @@ class MainActivity: AppCompatActivity() {
 			startActivity(Intent(this, SettingsActivity::class.java))
 			true
 		}
-		R.id.action_get_db -> {
+		R.id.action_resync -> {
 			syncDBs()
 			true
 		}
@@ -104,12 +104,13 @@ class MainActivity: AppCompatActivity() {
 					addSong(it.getMediaPath())
 				}
 			}, { all ->
-				connectToPlayer {
+				connectToPlayer { player ->
 					all.map { it.getMediaPath() }.let {
 						if(addSongsRandomized()) it.shuffled() else it
 					}.forEach { song ->
-						it.safe { it.emo.add(song) }
+						player.safe { player.emo.add(song) }
 					}
+					player.toastController.show(getString(R.string.added_songs, all.size))
 				}
 			})
 

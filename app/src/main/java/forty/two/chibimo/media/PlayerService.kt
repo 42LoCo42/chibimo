@@ -13,6 +13,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -197,7 +198,26 @@ class PlayerService: LifecycleService() {
 			Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
 		)
 
-		mediaSession = MediaSessionCompat(this, "PlayerService")
+		mediaSession = MediaSessionCompat(this, "PlayerService").apply {
+			setCallback(object: MediaSessionCompat.Callback() {
+				override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
+					val event = mediaButtonEvent?.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT) ?: return false
+					if(event.action == KeyEvent.ACTION_UP) return true
+
+					when(event.keyCode) {
+						KeyEvent.KEYCODE_MEDIA_NEXT -> getAndPlayNext()
+						KeyEvent.KEYCODE_MEDIA_PREVIOUS -> player.seekTo(0)
+						KeyEvent.KEYCODE_MEDIA_PLAY ->
+							if(player.state == MediaPlayerState.Paused) player.start()
+							else getAndPlayNext()
+						KeyEvent.KEYCODE_MEDIA_PAUSE ->
+							if(player.state == MediaPlayerState.Started) player.pause()
+						else -> toastController.show("Unknown event $event")
+					}
+					return true
+				}
+			})
+		}
 		mediaStyle = MediaStyle().setMediaSession(mediaSession.sessionToken)
 		builder = NotificationCompat.Builder(this, CHANNEL_ID)
 			.setStyle(mediaStyle)

@@ -6,5 +6,5 @@
 		android:id="@+id/action_settings"
 		android:title="@string/settings"
 		app:showAsAction="never"/>
-	<item android:title="@string/download_song_db" android:id="@+id/action_get_db" app:showAsAction="never"/>
+	<item android:title="@string/resync_now" android:id="@+id/action_resync" app:showAsAction="never"/>
 </menu>
