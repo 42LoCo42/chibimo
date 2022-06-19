@@ -1,6 +1,9 @@
 package forty.two.chibimo.emo
 
+import android.content.Context
+import androidx.preference.PreferenceManager
 import forty.two.chibimo.db.Changes
+import forty.two.chibimo.utils.EMO_URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ktorm.database.Database
@@ -18,10 +21,9 @@ import java.net.Socket
 /**
  * @author Leon Schumacher
  */
-class EmoConnection(
-	private val addressAndPort: String
-) {
+class EmoConnection(private val context: Context) {
 	private suspend fun <T> withConnection(block: (BufferedReader, BufferedWriter) -> T): T {
+		val addressAndPort = PreferenceManager.getDefaultSharedPreferences(context).getString(EMO_URL, null) ?: ""
 		val parts = addressAndPort.split(":")
 		if(parts.size != 2) throw java.lang.IllegalArgumentException("Invalid address: needs to be IP:Port")
 

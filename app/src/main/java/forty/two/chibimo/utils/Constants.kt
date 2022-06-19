@@ -10,6 +10,9 @@ import forty.two.chibimo.R
  * @author: Leon Schumacher (Matrikelnummer 19101)
  */
 const val MUSIC_DIRECTORY = "musicDirectory"
+const val EMO_URL = "emoURL"
+const val FIRST_RUN = "firstRun"
+const val SYNC_ON_LAUNCH = "syncOnLaunch"
 
 fun getMusicDirUri(context: Context): Uri? =
 	PreferenceManager.getDefaultSharedPreferences(context).getString(MUSIC_DIRECTORY, "")?.let {

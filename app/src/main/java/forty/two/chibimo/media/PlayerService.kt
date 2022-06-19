@@ -19,7 +19,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.media.app.NotificationCompat.MediaStyle
-import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
 import forty.two.chibimo.db.Changes
 import forty.two.chibimo.db.Songs
@@ -52,11 +51,7 @@ class PlayerService: LifecycleService() {
 		Emo(db)
 	}
 	val emoConnection: EmoConnection by lazy {
-		EmoConnection(
-			PreferenceManager
-				.getDefaultSharedPreferences(this)
-				.getString("emoURL", null) ?: ""
-		)
+		EmoConnection(this)
 	}
 
 	private var isStarted = false

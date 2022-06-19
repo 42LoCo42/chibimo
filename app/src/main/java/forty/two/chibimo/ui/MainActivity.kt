@@ -15,9 +15,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
-import forty.two.chibimo.utils.connectToPlayer
-import forty.two.chibimo.utils.getMusicDir
-import forty.two.chibimo.utils.millisToTimeString
+import forty.two.chibimo.utils.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.sql.DriverManager
@@ -41,6 +39,10 @@ class MainActivity: AppCompatActivity() {
 		}
 		R.id.action_resync -> {
 			syncDBs()
+			true
+		}
+		R.id.action_help -> {
+			startActivity(Intent(this, HelpActivity::class.java))
 			true
 		}
 		else -> true
@@ -90,7 +92,17 @@ class MainActivity: AppCompatActivity() {
 		})
 
 		thread {
-			val dir = getMusicDir(this) ?: return@thread
+			val dir = getMusicDir(this)
+			if(dir == null) {
+				runOnUiThread {
+					treeBox.removeAllViews()
+					treeBox.addView(TextView(this).apply {
+						text = context.getString(R.string.no_music_dir)
+						textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+					})
+				}
+				return@thread
+			}
 			val mediaTree = MediaTree(this, dir, {
 				if(longTapPlaySongs()) {
 					addSong(it.getMediaPath())
@@ -144,7 +156,15 @@ class MainActivity: AppCompatActivity() {
 		setSupportActionBar(toolbar)
 
 		DriverManager.registerDriver(org.sqldroid.SQLDroidDriver())
-		syncDBs()
+
+		with(PreferenceManager.getDefaultSharedPreferences(this)) {
+			if(getBoolean(FIRST_RUN, true)) {
+				startActivity(Intent(this@MainActivity, HelpActivity::class.java))
+				edit().putBoolean(FIRST_RUN, false).apply()
+			} else if(getBoolean(SYNC_ON_LAUNCH, false)) {
+				syncDBs()
+			}
+		}
 
 		fun setPlayPauseBtnIcon(playing: Boolean) {
 			with(findViewById<Button>(R.id.btnPlayPause)) {
@@ -195,7 +215,9 @@ class MainActivity: AppCompatActivity() {
 
 		findViewById<Button>(R.id.btnRepeat).setOnClickListener {
 			connectToPlayer {
+				if(it.currentSong.isBlank()) return@connectToPlayer
 				it.safe { it.emo.add(it.currentSong) }
+				it.toastController.show(getString(R.string.repeated_song, it.currentSong))
 			}
 		}
 

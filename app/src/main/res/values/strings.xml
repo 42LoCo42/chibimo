@@ -15,6 +15,7 @@
 	<string name="play_song_directly">Play song directly</string>
 	<string name="add_song_to_queue">Add song to queue</string>
 	<string name="add_songs_random">Add songs in random order</string>
+	<string name="syncOnLaunch">Resync on launch</string>
 	<string name="yes">Yes</string>
 	<string name="no">No</string>
 	<string name="local_music_directory">Local music directory</string>
@@ -26,4 +27,30 @@
 	<string name="imported_songs">Imported %d songs</string>
 	<string name="added_songs">Added %d songs</string>
 	<string name="resync_now">Resync now</string>
+	<string name="help">Help</string>
+	<string name="repeated_song">Repeated %s</string>
+	<string name="no_music_dir">No music directory configured</string>
+
+	<string name="welcome_to_chibimo">Welcome to chibimo!</string>
+	<string name="help_play_pause">Play/Pause current song</string>
+	<string name="help_next">Go to next song</string>
+	<string name="help_repeat">Repeat current song</string>
+	<string name="help_stop">Stop playback</string>
+	<string name="help_resync">Menu → Resync now to synchronize the song database with the configured emo server
+	</string>
+	<string name="help_play">Short tap on song: Play now</string>
+	<string name="help_add_song">Long tap on song: Add to queue</string>
+	<string name="help_add_folder">Long tap on folder: Add all songs inside to queue</string>
+	<string name="help_tap_switch">You can switch these function in the Settings menu</string>
+	<string name="help_configuration">To use chibimo, a local music directory and an emo server must be configured. This
+		is done via the Settings menu. Please select a folder containing your music files, then enter the address of
+		your emo server in the form \"IP:Port\" or \"Hostname:Port\"
+	</string>
+	<string name="help_offline">Chibimo works fully offline, but will sync your song statistics with emo on every
+		startup (if enabled) or by manually selecting \"Resync now\".
+	</string>
+	<string name="help_offline2">If chibimo synced to emo at least once, it can be used offline indefinitely.</string>
+	<string name="help_warning">Make sure not to connect to a different type of server, since its protocol could be
+		falsely interpreted as emo control commands and corrupt your local database.
+	</string>
 </resources>

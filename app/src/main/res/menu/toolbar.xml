@@ -7,4 +7,5 @@
 		android:title="@string/settings"
 		app:showAsAction="never"/>
 	<item android:title="@string/resync_now" android:id="@+id/action_resync" app:showAsAction="never"/>
+	<item android:title="@string/help" android:id="@+id/action_help"/>
 </menu>
