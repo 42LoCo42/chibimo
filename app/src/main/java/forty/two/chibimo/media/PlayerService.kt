@@ -37,7 +37,14 @@ import java.util.*
  */
 const val CHANNEL_ID = "chibimoPlayer"
 
+/**
+ * The central part of chibimo.
+ * This service manages music playback and holds database & server connections.
+ */
 class PlayerService: LifecycleService() {
+	/**
+	 * Stub binder that just contains a reference to [PlayerService]
+	 */
 	data class MyBinder(val playerService: PlayerService): Binder()
 
 	val toastController = ToastController(this)
@@ -99,6 +106,9 @@ class PlayerService: LifecycleService() {
 		super.onCreate()
 	}
 
+	/**
+	 * Run something inside a try-catch block that will display exceptions with a [Toast].
+	 */
 	fun safe(block: () -> Unit) {
 		try {
 			block()
@@ -108,15 +118,24 @@ class PlayerService: LifecycleService() {
 		}
 	}
 
-	private fun complete(song: String, completion: Int) {
+	/**
+	 * Finish the current song, possibly completing it.
+	 */
+	private fun finish(song: String, completion: Int) {
 		Log.d("player", "completed $song at $completion")
 		if(completion >= 80) safe { emo.complete(song) }
 	}
 
+	/**
+	 * Play the next song returned from emo.
+	 */
 	fun getAndPlayNext() {
 		safe { play(emo.next()) }
 	}
 
+	/**
+	 * Play the specified song.
+	 */
 	fun play(song: String) {
 		stop()
 		val file = getMusicDir(this)?.child(song) ?: return
@@ -156,6 +175,9 @@ class PlayerService: LifecycleService() {
 		}
 	}
 
+	/**
+	 * Toggle song playback.
+	 */
 	fun playPause(): Boolean {
 		if(player.state == MediaPlayerState.Started) {
 			player.pause()
@@ -165,14 +187,20 @@ class PlayerService: LifecycleService() {
 		return player.isPlaying
 	}
 
+	/**
+	 * Seek to a specified position in milliseconds of the current song.
+	 */
 	fun seekTo(position: Int) {
 		if(player.state == MediaPlayerState.Started || player.state == MediaPlayerState.Paused)
 			player.seekTo(position)
 	}
 
+	/**
+	 * Stop the current song
+	 */
 	private fun stop() {
 		if(currentSong.isNotEmpty()) {
-			complete(currentSong, position * 100 / duration)
+			finish(currentSong, position * 100 / duration)
 
 			if(::progressTask.isInitialized) {
 				progressTask.cancel()
@@ -181,12 +209,18 @@ class PlayerService: LifecycleService() {
 		currentSong = ""
 	}
 
+	/**
+	 * Stop the entire service.
+	 */
 	fun hardStop() {
 		stop()
 		player.release()
 		stopSelf()
 	}
 
+	/**
+	 * Create the background service notification.
+	 */
 	private fun createNotification(): Notification {
 		val intent = PendingIntent.getActivity(
 			this, 42,
@@ -223,6 +257,10 @@ class PlayerService: LifecycleService() {
 		return builder.build()
 	}
 
+	/**
+	 * Update the background service notification
+	 * with the current playback progress.
+	 */
 	private fun updateProgress() {
 		progressCallback?.let { it(position, duration) }
 		mediaSession.setPlaybackState(

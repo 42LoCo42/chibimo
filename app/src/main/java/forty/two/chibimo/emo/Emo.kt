@@ -11,15 +11,26 @@ import org.ktorm.dsl.*
 /**
  * @author: Leon Schumacher (Matrikelnummer 19101)
  */
+
+/**
+ * A local emo implementation.
+ * We don't need multi-client support, so we use a simple deque as a queue.
+ */
 class Emo(
 	private val db: Database
 ) {
 	private val queue = ArrayDeque<String>()
 
+	/**
+	 * Add a song to the queue
+	 */
 	fun add(song: String) {
 		queue.add(song)
 	}
 
+	/**
+	 * Get the next song from the queue or the generator.
+	 */
 	fun next(): String {
 		if(queue.isEmpty()) {
 			val dataset = db
@@ -34,10 +45,16 @@ class Emo(
 		return queue.removeFirst()
 	}
 
+	/**
+	 * Clear the queue
+	 */
 	fun clear() {
 		queue.clear()
 	}
 
+	/**
+	 * Signify completion of this song.
+	 */
 	fun complete(song: String) {
 		Log.e("COMPLETION", song)
 		db.update(Changes) {
@@ -55,6 +72,10 @@ class Emo(
 		db.from(Changes).select().forEach { println("${it[Changes.path]}: ${it[Changes.change]}") }
 	}
 
+	/**
+	 * Overwrite the current song database with the provided values.
+	 * This function is supposed to be called with the output of [EmoConnection.getSongs]
+	 */
 	fun setSongsDBFromRawSongs(rawSongs: List<String>): Int {
 		db.deleteAll(Songs)
 		return db.batchInsert(Songs) {

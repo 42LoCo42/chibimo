@@ -12,6 +12,10 @@ import forty.two.chibimo.R
 /**
  * @author: Leon Schumacher (Matrikelnummer 19101)
  */
+
+/**
+ * A tree view of music files in a song library.
+ */
 class MediaTree(
 	context: Context,
 	dir: DocumentFile,
@@ -19,6 +23,10 @@ class MediaTree(
 	private val onNodeLongClick: (MediaTreeNode) -> Unit,
 	private val onDirLongClick: (List<MediaTreeNode>) -> Unit,
 ): AndroidTreeView(context) {
+	/**
+	 * Recursively add the items of [dir] to [node].
+	 * They will have the specified [indent].
+	 */
 	private fun addMediaItems(node: TreeNode, dir: DocumentFile, indent: Int) {
 		dir.listFiles().sortedBy { it.name }.forEach {
 			if(it == null) return@forEach
@@ -71,7 +79,13 @@ class MediaTree(
 	}
 }
 
+/**
+ * A single view in the media tree.
+ */
 data class MediaTreeNode(val value: MediaTreeItem): TreeNode(value) {
+	/**
+	 * Get the full path to the contained song.
+	 */
 	fun getMediaPath(): String {
 		// all nodes have the root node as parent, which has no parent
 		// therefore we have to check if our grandparent is null to know
@@ -83,6 +97,10 @@ data class MediaTreeNode(val value: MediaTreeItem): TreeNode(value) {
 		} + value.title
 	}
 
+	/**
+	 * If this node is a folder, get all its children.
+	 * Otherwise, just return the node itself.
+	 */
 	fun getAllChildren(): List<MediaTreeNode> =
 		if(value.canExpand) {
 			children.map { (it as MediaTreeNode).getAllChildren() }.flatten()
@@ -91,12 +109,20 @@ data class MediaTreeNode(val value: MediaTreeItem): TreeNode(value) {
 		}
 }
 
+/**
+ * Data stored in a [MediaTreeNode].
+ * Every node has a [title], an [indent] level
+ * and a file/directory switch ([canExpand])
+ */
 data class MediaTreeItem(
 	val title: String,
 	val indent: Int,
 	val canExpand: Boolean,
 )
 
+/**
+ * The holder class for views inside of media tree nodes.
+ */
 class MyHolder(context: Context): TreeNode.BaseNodeViewHolder<MediaTreeItem>(context) {
 	private val dp = context.resources.displayMetrics.density.toInt()
 

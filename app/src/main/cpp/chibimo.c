@@ -9,12 +9,6 @@ JNIEXPORT int JNICALL Java_forty_two_chibimo_zeolite_ZeoliteKt_zeoliteInit(
 	return zeolite_init();
 }
 
-JNIEXPORT void JNICALL Java_forty_two_chibimo_zeolite_ZeoliteKt_zeoliteFree(
-	JNIEnv* env, jobject obj
-) {
-	zeolite_free();
-}
-
 JNIEXPORT jlong JNICALL Java_forty_two_chibimo_zeolite_ZeoliteKt_zeoliteCreate(
 	JNIEnv* env, jobject obj
 ) {
@@ -26,12 +20,6 @@ JNIEXPORT jlong JNICALL Java_forty_two_chibimo_zeolite_ZeoliteKt_zeoliteCreate(
 		return 0;
 	}
 	return (jlong) z;
-}
-
-JNIEXPORT void JNICALL Java_forty_two_chibimo_zeolite_ZeoliteKt_zeoliteDestroy(
-	JNIEnv* env, jobject obj, jlong z
-) {
-	// free((zeolite*) z);
 }
 
 zeolite_error trustAll(zeolite_sign_pk pk) {

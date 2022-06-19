@@ -6,6 +6,9 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import forty.two.chibimo.R
 
+/**
+ * The Help / first-start message describing all functionality of chibimo.
+ */
 class HelpActivity: AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)

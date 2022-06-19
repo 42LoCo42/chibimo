@@ -21,6 +21,10 @@ import java.net.Socket
 /**
  * @author Leon Schumacher
  */
+
+/**
+ * A connection to an emo server.
+ */
 class EmoConnection(private val context: Context) {
 	private suspend fun <T> withConnection(block: (BufferedReader, BufferedWriter) -> T): T {
 		val addressAndPort = PreferenceManager.getDefaultSharedPreferences(context).getString(EMO_URL, null) ?: ""
@@ -42,6 +46,9 @@ class EmoConnection(private val context: Context) {
 		flush()
 	}
 
+	/**
+	 * Upload & delete all pending changes.
+	 */
 	suspend fun uploadChanges(db: Database) = withConnection { _, writer ->
 		writer.writeLine("mergeChanges")
 		db
@@ -53,6 +60,9 @@ class EmoConnection(private val context: Context) {
 		db.deleteAll(Changes)
 	}
 
+	/**
+	 * Download the song database.
+	 */
 	suspend fun getSongs() = withConnection { reader, writer ->
 		writer.writeLine("getTable songs")
 		val lines = mutableListOf<String>()

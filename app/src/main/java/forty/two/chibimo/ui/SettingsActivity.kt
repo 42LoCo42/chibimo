@@ -11,6 +11,10 @@ import forty.two.chibimo.R
 import forty.two.chibimo.utils.MUSIC_DIRECTORY
 import forty.two.chibimo.utils.getUriSummary
 
+/**
+ * The Settings UI.
+ * From here, important parameters of chibimo can be configured.
+ */
 class SettingsActivity: AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)

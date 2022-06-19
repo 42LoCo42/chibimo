@@ -24,6 +24,12 @@ import java.net.Socket
 import java.sql.DriverManager
 import kotlin.concurrent.thread
 
+/**
+ * The default UI.
+ * Here, songs can be selected from the media library
+ * and either played directly or added to the queue.
+ * Playback information & controls are also displayed here.
+ */
 class MainActivity: AppCompatActivity() {
 	private var seekBarInUse = false
 	private lateinit var seekBar: SeekBar
@@ -58,6 +64,10 @@ class MainActivity: AppCompatActivity() {
 		else -> true
 	}
 
+	/**
+	 * Set the progress callback of a [forty.two.chibimo.media.PlayerService]
+	 * so that we can display the current playback information too.
+	 */
 	private fun setPlayerCallbacks() {
 		connectToPlayer {
 			it.progressCallback = { position, duration ->
@@ -72,12 +82,21 @@ class MainActivity: AppCompatActivity() {
 		}
 	}
 
+	/**
+	 * Should long tapping a song play it?
+	 */
 	private fun longTapPlaySongs() =
 		PreferenceManager.getDefaultSharedPreferences(this).getBoolean("longTapPlaysSongs", false)
 
+	/**
+	 * Should folder contents be added randomly?
+	 */
 	private fun addSongsRandomized() =
 		PreferenceManager.getDefaultSharedPreferences(this).getBoolean("addSongsRandomized", false)
 
+	/**
+	 * Play a song.
+	 */
 	private fun playSong(song: String) {
 		connectToPlayer {
 			it.play(song)
@@ -85,6 +104,9 @@ class MainActivity: AppCompatActivity() {
 		setPlayerCallbacks()
 	}
 
+	/**
+	 * Add a song to the queue.
+	 */
 	private fun addSong(song: String) {
 		connectToPlayer {
 			it.safe { it.emo.add(song) }
@@ -92,6 +114,10 @@ class MainActivity: AppCompatActivity() {
 		}
 	}
 
+	/**
+	 * Rebuild the song library view.
+	 * This will take some time, so we show a "Loading..." text.
+	 */
 	private fun rebuildMediaTree() {
 		val treeBox = findViewById<ScrollView>(R.id.treeBox)
 
@@ -143,6 +169,9 @@ class MainActivity: AppCompatActivity() {
 		}
 	}
 
+	/**
+	 * Upload local changes, then download the new song database from the emo server.
+	 */
 	private fun syncDBs() {
 		connectToPlayer {
 			lifecycleScope.launch(Dispatchers.IO) {
@@ -171,7 +200,7 @@ class MainActivity: AppCompatActivity() {
 			val socket = Socket("192.168.178.20", 37812)
 			val fd = ParcelFileDescriptor.fromSocket(socket).fd
 
-			if(zeoliteInit() != success.toInt()) throw java.lang.RuntimeException("Could not initialize zeolite")
+			if(zeoliteInit() != success) throw java.lang.RuntimeException("Could not initialize zeolite")
 
 			val zeolite = zeoliteCreate()
 			val channel = zeoliteCreateChannel(zeolite, fd)
@@ -183,7 +212,7 @@ class MainActivity: AppCompatActivity() {
 
 			while(true) {
 				val msg = zeoliteChannelRecv(channel)
-				if(msg == null || msg == "end\n") break;
+				if(msg == null || msg == "end\n") break
 				print(msg)
 			}
 		}

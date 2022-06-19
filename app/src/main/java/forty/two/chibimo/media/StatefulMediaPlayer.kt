@@ -7,6 +7,10 @@ import android.net.Uri
 /**
  * @author: Leon Schumacher (Matrikelnummer 19101)
  */
+
+/**
+ * A list of all possible [MediaPlayer] states.
+ */
 enum class MediaPlayerState {
 	Idle, Initialized,
 	Preparing, Prepared,
@@ -15,6 +19,9 @@ enum class MediaPlayerState {
 	End, Error
 }
 
+/**
+ * A wrapper for [MediaPlayer] that stores its current state.
+ */
 class StatefulMediaPlayer: MediaPlayer() {
 	var state: MediaPlayerState = MediaPlayerState.Idle
 
