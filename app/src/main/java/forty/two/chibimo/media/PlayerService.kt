@@ -134,7 +134,7 @@ class PlayerService: LifecycleService() {
 	 */
 	fun play(song: String) {
 		stop()
-		val file = getMusicDir(this)?.child(song) ?: return
+		val file = getMusicDir(this)?.child(song) ?: throw RuntimeException("Song $song not found!")
 
 		try {
 			with(player) {

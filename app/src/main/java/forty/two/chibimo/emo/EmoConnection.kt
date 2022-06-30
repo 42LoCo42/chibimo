@@ -36,6 +36,7 @@ fun uploadChanges(db: Database) {
 			send(it[Changes.path] + "\t" + it[Changes.change])
 		}
 	db.deleteAll(Changes)
+	send("\n")
 }
 
 /**
@@ -47,7 +48,7 @@ fun getSongs(): List<String> {
 	while(true) {
 		val line = recv()
 		if(line.isNullOrBlank()) break
-		lines.add(line)
+		lines.add(line.trim())
 	}
 	return lines
 }

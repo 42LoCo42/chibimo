@@ -55,7 +55,7 @@ export(jboolean, init, ,jstring jaddr, jstring jport) {
 	const char* addr = (*env)->GetStringUTFChars(env, jaddr, NULL);
 	const char* port = (*env)->GetStringUTFChars(env, jport, NULL);
 
-	safe(sodium_init() != 0, "Could not init libsodium");
+	safe(sodium_init() < 0, "Could not init libsodium");
 	safe(crypto_sign_keypair(state.sign_pk, state.sign_sk) != 0,
 		"Could not create identity");
 
