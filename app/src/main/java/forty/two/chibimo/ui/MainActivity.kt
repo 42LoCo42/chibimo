@@ -3,7 +3,6 @@ package forty.two.chibimo.ui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -16,11 +15,12 @@ import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import forty.two.chibimo.R
+import forty.two.chibimo.emo.getSongs
+import forty.two.chibimo.emo.restart
+import forty.two.chibimo.emo.uploadChanges
 import forty.two.chibimo.utils.*
-import forty.two.chibimo.zeolite.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.net.Socket
 import java.sql.DriverManager
 import kotlin.concurrent.thread
 
@@ -176,8 +176,9 @@ class MainActivity: AppCompatActivity() {
 		connectToPlayer {
 			lifecycleScope.launch(Dispatchers.IO) {
 				try {
-					it.emoConnection.uploadChanges(it.db)
-					val count = it.emo.setSongsDBFromRawSongs(it.emoConnection.getSongs())
+					restart(this@MainActivity)
+					uploadChanges(it.db)
+					val count = it.emo.setSongsDBFromRawSongs(getSongs())
 					it.toastController.show(getString(R.string.imported_songs, count))
 				} catch(e: Exception) {
 					Log.e("Connection error", null, e)
@@ -195,27 +196,6 @@ class MainActivity: AppCompatActivity() {
 		setSupportActionBar(toolbar)
 
 		DriverManager.registerDriver(org.sqldroid.SQLDroidDriver())
-
-		lifecycleScope.launch(Dispatchers.IO) {
-			val socket = Socket("192.168.178.20", 37812)
-			val fd = ParcelFileDescriptor.fromSocket(socket).fd
-
-			if(zeoliteInit() != success) throw java.lang.RuntimeException("Could not initialize zeolite")
-
-			val zeolite = zeoliteCreate()
-			val channel = zeoliteCreateChannel(zeolite, fd)
-
-			zeoliteChannelSend(channel, "add foo\n")
-			zeoliteChannelSend(channel, "add bar\n")
-			zeoliteChannelSend(channel, "add baz\n")
-			zeoliteChannelSend(channel, "queue\n")
-
-			while(true) {
-				val msg = zeoliteChannelRecv(channel)
-				if(msg == null || msg == "end\n") break
-				print(msg)
-			}
-		}
 
 		with(PreferenceManager.getDefaultSharedPreferences(this)) {
 			if(getBoolean(FIRST_RUN, true)) {

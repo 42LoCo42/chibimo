@@ -23,7 +23,6 @@ import forty.two.chibimo.R
 import forty.two.chibimo.db.Changes
 import forty.two.chibimo.db.Songs
 import forty.two.chibimo.emo.Emo
-import forty.two.chibimo.emo.EmoConnection
 import forty.two.chibimo.ui.MainActivity
 import forty.two.chibimo.ui.ToastController
 import forty.two.chibimo.utils.child
@@ -56,9 +55,6 @@ class PlayerService: LifecycleService() {
 	}
 	val emo: Emo by lazy {
 		Emo(db)
-	}
-	val emoConnection: EmoConnection by lazy {
-		EmoConnection(this)
 	}
 
 	private var isStarted = false
