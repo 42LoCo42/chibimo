@@ -44,11 +44,7 @@ fun uploadChanges(db: Database) {
  */
 fun getSongs(): List<String> {
 	send("getTable songs\n")
-	val lines = mutableListOf<String>()
-	while(true) {
-		val line = recv()
-		if(line.isNullOrBlank()) break
-		lines.add(line.trim())
-	}
-	return lines
+	val result = recv()
+	if(result.isNullOrBlank()) throw java.lang.RuntimeException("Could not receive songs")
+	return result.trim().split("\n")
 }
