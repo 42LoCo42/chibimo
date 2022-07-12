@@ -74,7 +74,7 @@ class Emo(
 
 	/**
 	 * Overwrite the current song database with the provided values.
-	 * This function is supposed to be called with the output of [EmoConnection.getSongs]
+	 * This function is supposed to be called with the output of [getSongs]
 	 */
 	fun setSongsDBFromRawSongs(rawSongs: List<String>): Int {
 		db.deleteAll(Songs)
